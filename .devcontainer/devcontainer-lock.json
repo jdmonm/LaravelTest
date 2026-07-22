@@ -1,0 +1,34 @@
+{
+  "features": {
+    "ghcr.io/cirolosapio/devcontainers-features/alpine-php-pcntl:0": {
+      "version": "0.0.2",
+      "resolved": "ghcr.io/cirolosapio/devcontainers-features/alpine-php-pcntl@sha256:d5dc5de4bdfe0f4caa9745292966b8be3c4007d3827a2b56fef0f39ea1e6b6ae",
+      "integrity": "sha256:d5dc5de4bdfe0f4caa9745292966b8be3c4007d3827a2b56fef0f39ea1e6b6ae"
+    },
+    "ghcr.io/devcontainers-extra/features/composer:1": {
+      "version": "1.0.1",
+      "resolved": "ghcr.io/devcontainers-extra/features/composer@sha256:92bd9a7d6b294cdf231e7c4c36897da20e09e65d580db516d768c8b309496a76",
+      "integrity": "sha256:92bd9a7d6b294cdf231e7c4c36897da20e09e65d580db516d768c8b309496a76"
+    },
+    "ghcr.io/devcontainers-extra/features/vue-cli:2": {
+      "version": "2.0.16",
+      "resolved": "ghcr.io/devcontainers-extra/features/vue-cli@sha256:ff0cbfded89c67b36e55876c01b11a9f2a3292d1f724ecf0a837a0df5b9f6668",
+      "integrity": "sha256:ff0cbfded89c67b36e55876c01b11a9f2a3292d1f724ecf0a837a0df5b9f6668"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "1.1.0",
+      "resolved": "ghcr.io/devcontainers/features/github-cli@sha256:d22f50b70ed75339b4eed1ba9ecde3a1791f90e88d37936517e3bace0bbad671",
+      "integrity": "sha256:d22f50b70ed75339b4eed1ba9ecde3a1791f90e88d37936517e3bace0bbad671"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "1.7.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6",
+      "integrity": "sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6"
+    },
+    "ghcr.io/jckimble/devcontainer-features/ngrok:3": {
+      "version": "3.1.2",
+      "resolved": "ghcr.io/jckimble/devcontainer-features/ngrok@sha256:48daeec5d1c350d8bb225091f16fd9e0f947437831ca133264c93e4068229fa9",
+      "integrity": "sha256:48daeec5d1c350d8bb225091f16fd9e0f947437831ca133264c93e4068229fa9"
+    }
+  }
+}
