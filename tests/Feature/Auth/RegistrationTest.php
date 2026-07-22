@@ -1,11 +1,16 @@
 <?php
 
+use App\Enums\LibraryRole;
+use App\Models\User;
+use Database\Seeders\LibraryAuthorizationSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Fortify\Features;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->skipUnlessFortifyHas(Features::registration());
+    $this->seed(LibraryAuthorizationSeeder::class);
 });
 
 test('registration screen can be rendered', function () {
@@ -24,4 +29,7 @@ test('new users can register', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+
+    expect(User::query()->where('email', 'test@example.com')->sole()->hasRole(LibraryRole::Member))
+        ->toBeTrue();
 });
