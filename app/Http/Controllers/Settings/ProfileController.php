@@ -9,6 +9,8 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -48,11 +50,25 @@ class ProfileController extends Controller
      */
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
-        $user = $request->user();
+        $deleted = DB::transaction(function () use ($request): bool {
+            $user = $request->user()->newQuery()->lockForUpdate()->findOrFail($request->user()->id);
+
+            if ($user->loans()->exists()) {
+                return false;
+            }
+
+            $user->delete();
+
+            return true;
+        });
+
+        if (! $deleted) {
+            throw ValidationException::withMessages([
+                'account' => 'Accounts with loan history cannot be deleted.',
+            ]);
+        }
 
         Auth::logout();
-
-        $user->delete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

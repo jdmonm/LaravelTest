@@ -13,7 +13,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P0 | Cuenta administradora demo con credenciales conocidas | Resuelto | Seguridad / seeders |
 | P1 | Carrera entre actualizacion de inventario y check-out | Resuelto | Dominio / concurrencia |
 | P1 | Registro depende de roles no sembrados y no es atomico | Resuelto | Provisionamiento / autenticacion |
-| P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Pendiente | Datos / cuentas |
+| P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Resuelto | Datos / cuentas |
 | P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Pendiente | Seguridad de cuenta |
 | P2 | Formularios y mutaciones Vue tienen errores o estados pendientes incompletos | Pendiente | Experiencia / frontend |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
@@ -74,12 +74,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 6. Eliminar un perfil con prestamos falla y puede dejar roles inconsistentes
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [ProfileController.php](app/Http/Controllers/Settings/ProfileController.php), [create_loans_table.php](database/migrations/2026_07_22_220100_create_loans_table.php)
 - **Severidad:** Alta
 - **Evidencia:** `loans.borrower_id` usa `restrictOnDelete()`. Al intentar borrar un usuario con prestamos, la base rechaza el borrado; los listeners de roles pueden ejecutarse antes del fallo SQL.
 - **Impacto:** se muestra un error de servidor, el usuario puede quedar desconectado y sus relaciones de rol pueden cambiar aunque la cuenta permanezca.
-- **Correccion recomendada:** impedir de forma explicita la eliminacion con prestamos antes de cerrar sesion, o aplicar soft delete/anonymizacion compatible con retencion historica. La operacion compuesta debe ser transaccional.
-- **Prueba requerida:** cubrir prestamos activos y devueltos, asegurando que la cuenta y roles se conservan si no se permite borrar.
+- **Correccion aplicada:** el borrado bloquea la cuenta, comprueba el historial de prestamos y rechaza la operacion antes de cerrar sesion. La eliminacion se ejecuta dentro de una transaccion para revertir cambios de roles si una restriccion de base de datos rechaza una carrera concurrente.
+- **Validacion aplicada:** una prueba crea un prestamo y confirma que el borrado devuelve un error visible, conserva la sesion, la cuenta y su rol.
 
 ## P2 - Seguridad y Experiencia de Cuenta
 
@@ -192,8 +193,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Siguiente Orden de Trabajo
 
-1. Corregir eliminacion de perfiles con prestamos.
-2. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
-3. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
-4. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
-5. Dejar `composer lint:check` en verde.
+1. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
+2. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
+3. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
+4. Dejar `composer lint:check` en verde.

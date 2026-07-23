@@ -1,8 +1,12 @@
 <?php
 
+use App\Enums\LibraryRole;
+use App\Models\Loan;
 use App\Models\User;
+use Database\Seeders\LibraryAuthorizationSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -84,4 +88,27 @@ test('correct password must be provided to delete account', function () {
         ->assertRedirect(route('profile.edit'));
 
     expect($user->fresh())->not->toBeNull();
+});
+
+test('users with loan history cannot delete their account or lose their roles', function () {
+    $this->seed(LibraryAuthorizationSeeder::class);
+
+    $user = User::factory()->create();
+    $user->assignRole(LibraryRole::Member);
+    Loan::factory()->for($user, 'borrower')->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->from(route('profile.edit'))
+        ->delete(route('profile.destroy'), [
+            'password' => 'password',
+        ]);
+
+    $response
+        ->assertSessionHasErrors('account')
+        ->assertRedirect(route('profile.edit'));
+
+    $this->assertAuthenticated();
+    expect($user->fresh())->not->toBeNull()
+        ->and($user->fresh()->hasRole(LibraryRole::Member))->toBeTrue();
 });
