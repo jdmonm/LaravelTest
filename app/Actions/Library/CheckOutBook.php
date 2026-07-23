@@ -21,7 +21,7 @@ class CheckOutBook
 
             if ($book->available_copies < 1) {
                 throw ValidationException::withMessages([
-                    'book' => 'This book has no available copies.',
+                    'book_id' => 'This book has no available copies.',
                 ]);
             }
 

@@ -16,6 +16,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Resuelto | Datos / cuentas |
 | P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Resuelto | Seguridad de cuenta |
 | P2 | Recuperacion, registro y confirmacion de contrasena requieren limites adicionales | Resuelto | Seguridad de cuenta |
+| P2 | Error de disponibilidad de libro no se muestra en checkout | Resuelto | Experiencia / frontend |
 | P2 | Formularios y mutaciones Vue tienen errores o estados pendientes incompletos | Pendiente | Experiencia / frontend |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
@@ -107,12 +108,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 9. Error de disponibilidad de libro no se muestra en checkout
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [CheckOutBook.php](app/Actions/Library/CheckOutBook.php), [LoansIndex.vue](resources/js/pages/library/LoansIndex.vue)
 - **Severidad:** Alta de experiencia
 - **Evidencia:** la accion devuelve el error bajo la clave `book`, pero el formulario muestra solo `checkoutForm.errors.book_id`.
 - **Impacto:** si otro usuario toma la ultima copia entre carga y envio, el dialogo falla sin explicacion visible.
-- **Correccion recomendada:** normalizar la clave a `book_id` o mostrar tambien `errors.book`. Mantener la validacion de disponibilidad en el servidor.
-- **Prueba requerida:** simular una copia agotada entre carga y check-out y verificar un mensaje visible.
+- **Correccion aplicada:** la accion de check-out usa la clave `book_id`, que el formulario ya muestra junto al selector de libro.
+- **Validacion aplicada:** una prueba HTTP intenta prestar una copia agotada y verifica que el error queda asociado al campo `book_id`.
 
 ### 10. Fecha limite seleccionable contradice la regla del servidor
 
@@ -196,6 +198,6 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Siguiente Orden de Trabajo
 
-1. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
+1. Resolver fecha limite y estados pendientes de Vue.
 2. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
 3. Dejar `composer lint:check` en verde.
