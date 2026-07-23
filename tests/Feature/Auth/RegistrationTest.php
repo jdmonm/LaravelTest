@@ -4,9 +4,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Enums\LibraryRole;
 use App\Models\User;
 use Database\Seeders\LibraryAuthorizationSeeder;
-use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Models\Role;
@@ -26,8 +24,6 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register', function () {
-    Notification::fake();
-
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -39,19 +35,15 @@ test('new users can register', function () {
     $response->assertRedirect(route('dashboard', absolute: false));
 
     expect(User::query()->where('email', 'test@example.com')->sole()->hasRole(LibraryRole::Member))
-        ->toBeTrue();
-
-    Notification::assertSentTo(
-        User::query()->where('email', 'test@example.com')->sole(),
-        VerifyEmail::class,
-    );
+        ->toBeTrue()
+        ->and(Features::enabled(Features::emailVerification()))->toBeFalse();
 });
 
 test('registration rolls back when the member role is unavailable', function () {
     Role::query()->where('name', LibraryRole::Member->value)->delete();
     app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-    expect(fn () => app(CreateNewUser::class)->create([
+    expect(fn() => app(CreateNewUser::class)->create([
         'name' => 'Missing Role User',
         'email' => 'missing-role@example.com',
         'password' => 'password',

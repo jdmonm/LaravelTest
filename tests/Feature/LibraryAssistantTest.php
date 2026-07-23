@@ -27,13 +27,13 @@ function assistantUser(LibraryRole $role): User
     return $user;
 }
 
-test('the library assistant requires a verified user', function () {
+test('the library assistant requires an authenticated user', function () {
     $this->get(route('assistant.index'))
         ->assertRedirect(route('login'));
 
     $this->actingAs(User::factory()->unverified()->create())
         ->get(route('assistant.index'))
-        ->assertRedirect(route('verification.notice'));
+        ->assertOk();
 });
 
 test('the library assistant page shows whether the user can manage loans', function () {
@@ -42,13 +42,13 @@ test('the library assistant page shows whether the user can manage loans', funct
 
     $this->actingAs($member)
         ->get(route('assistant.index'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn(Assert $page) => $page
             ->component('library/AssistantIndex')
             ->where('canManageLoans', false));
 
     $this->actingAs($librarian)
         ->get(route('assistant.index'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn(Assert $page) => $page
             ->component('library/AssistantIndex')
             ->where('canManageLoans', true));
 });
@@ -236,7 +236,7 @@ test('assistant conversation history is encrypted before it is stored in the ses
         ->postJson(route('assistant.store'), ['message' => $message])
         ->assertOk();
 
-    $storedHistory = session('library-assistant.history.'.$member->id);
+    $storedHistory = session('library-assistant.history.' . $member->id);
 
     expect($storedHistory)->toBeString()
         ->and($storedHistory)->not->toContain($message)
@@ -659,7 +659,7 @@ test('the assistant returns a final response after four tool rounds', function (
     config()->set('services.openai.model', 'gpt-4o-mini-2024-07-18');
     config()->set('services.openai.base_url', 'https://api.openai.com/v1');
     $book = Book::factory()->create(['title' => 'Four-Round Book']);
-    $toolResponse = static fn (string $id): array => [
+    $toolResponse = static fn(string $id): array => [
         'choices' => [[
             'message' => [
                 'role' => 'assistant',

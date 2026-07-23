@@ -22,14 +22,19 @@ function libraryUser(LibraryRole $role): User
     return $user;
 }
 
-test('unverified users are redirected away from Library Desk routes', function () {
+test('unverified users can access Library Desk routes according to their permissions', function () {
     $user = User::factory()->unverified()->create();
+    $user->assignRole(LibraryRole::Member);
 
-    foreach (['dashboard', 'books.index', 'loans.index', 'access.index'] as $route) {
+    foreach (['dashboard', 'assistant.index', 'books.index', 'loans.index'] as $route) {
         $this->actingAs($user)
             ->get(route($route))
-            ->assertRedirect(route('verification.notice'));
+            ->assertOk();
     }
+
+    $this->actingAs($user)
+        ->get(route('access.index'))
+        ->assertForbidden();
 });
 
 test('members can browse the catalogue but cannot create books', function () {
@@ -38,7 +43,7 @@ test('members can browse the catalogue but cannot create books', function () {
 
     $this->actingAs($member)
         ->get(route('books.index'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn(Assert $page) => $page
             ->component('library/BooksIndex')
             ->has('books.data', 1));
 
@@ -71,7 +76,7 @@ test('librarians can add books and search the catalogue', function () {
 
     $this->actingAs($librarian)
         ->get(route('books.index', ['search' => 'Kindred']))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn(Assert $page) => $page
             ->component('library/BooksIndex')
             ->has('books.data', 1)
             ->where('books.data.0.title', 'Kindred'));
@@ -109,7 +114,7 @@ test('members only see their own loans', function () {
 
     $this->actingAs($member)
         ->get(route('loans.index'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn(Assert $page) => $page
             ->component('library/LoansIndex')
             ->has('loans.data', 1)
             ->where('loans.data.0.id', $ownLoan->id)
@@ -132,7 +137,7 @@ test('loan responses provide date-only values and a server-calculated overdue st
 
     $this->actingAs($librarian)
         ->get(route('loans.index'))
-        ->assertInertia(fn (Assert $page) => $page
+        ->assertInertia(fn(Assert $page) => $page
             ->component('library/LoansIndex')
             ->where('loans.data.0.id', $returnedLoan->id)
             ->where('loans.data.0.due_at', $returnedLoan->due_at?->toDateString())
