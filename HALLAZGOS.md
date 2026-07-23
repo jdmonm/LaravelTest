@@ -14,7 +14,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P1 | Carrera entre actualizacion de inventario y check-out | Resuelto | Dominio / concurrencia |
 | P1 | Registro depende de roles no sembrados y no es atomico | Resuelto | Provisionamiento / autenticacion |
 | P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Resuelto | Datos / cuentas |
-| P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Pendiente | Seguridad de cuenta |
+| P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Resuelto | Seguridad de cuenta |
 | P2 | Formularios y mutaciones Vue tienen errores o estados pendientes incompletos | Pendiente | Experiencia / frontend |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
@@ -86,12 +86,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 7. Cambio de correo sin reautenticacion y sesiones persistentes tras reset
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [settings.php](routes/settings.php), [ProfileController.php](app/Http/Controllers/Settings/ProfileController.php), [ResetUserPassword.php](app/Actions/Fortify/ResetUserPassword.php), [app.php](bootstrap/app.php)
 - **Severidad:** Media
 - **Evidencia:** el correo se puede cambiar desde perfil sin solicitar contrasena actual o `password.confirm`. El reset actualiza la contrasena sin invalidar sesiones existentes.
 - **Impacto:** una sesion robada puede convertirse en toma de cuenta persistente al cambiar correo, iniciar reset y mantener otras sesiones activas.
-- **Correccion recomendada:** exigir `password.confirm` o `current_password` para cambiar correo; habilitar gestion de sesiones autenticadas e invalidar otras sesiones al reset o cambio de contrasena.
-- **Prueba requerida:** dos sesiones del mismo usuario; despues de reset o cambio sensible, la sesion secundaria debe quedar invalidada.
+- **Correccion aplicada:** cambiar el correo exige `current_password` en el servidor y en el formulario. El middleware global `auth.session` invalida cualquier sesion cuyo hash de contrasena quede obsoleto tras un cambio o reset; Fortify tambien rota el token de "remember me" al completar un reset.
+- **Validacion aplicada:** las pruebas rechazan un cambio de correo sin contrasena actual y comprueban que una sesion con hash anterior se cierra despues de actualizar o restablecer la contrasena.
 
 ### 8. Recuperacion, registro y confirmacion de contrasena requieren limites adicionales
 
@@ -193,7 +194,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Siguiente Orden de Trabajo
 
-1. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
+1. Agregar limites de tasa y respuestas no enumerables para autenticacion.
 2. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
 3. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
 4. Dejar `composer lint:check` en verde.

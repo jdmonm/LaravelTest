@@ -2,10 +2,11 @@
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->skipUnlessFortifyHas(Features::resetPasswords());
@@ -64,6 +65,33 @@ test('password can be reset with valid token', function () {
 
         return true;
     });
+});
+
+test('password resets invalidate sessions with an outdated password hash', function () {
+    Notification::fake();
+
+    $user = User::factory()->create();
+    $oldPasswordHash = $user->password;
+
+    $this->post(route('password.email'), ['email' => $user->email]);
+
+    Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        $this->post(route('password.update'), [
+            'token' => $notification->token,
+            'email' => $user->email,
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ])->assertRedirect(route('login'));
+
+        return true;
+    });
+
+    $this->actingAs($user->refresh())
+        ->withSession(['password_hash_web' => $oldPasswordHash])
+        ->get(route('dashboard'))
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
 });
 
 test('password cannot be reset with invalid token', function () {
