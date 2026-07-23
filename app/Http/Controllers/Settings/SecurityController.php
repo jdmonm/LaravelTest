@@ -21,6 +21,12 @@ class SecurityController extends Controller
         $props = [
             'canManageTwoFactor' => Features::canManageTwoFactorAuthentication(),
             'canManagePasskeys' => Features::canManagePasskeys(),
+            'canLinkGoogle' => filled(config('services.google.client_id'))
+                && filled(config('services.google.client_secret'))
+                && filled(config('services.google.redirect')),
+            'googleLinked' => $request->user()->socialIdentities()
+                ->where('provider', 'google')
+                ->exists(),
             'passkeys' => Features::canManagePasskeys()
                 ? $request->user()
                     ->passkeys()

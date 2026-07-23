@@ -42,4 +42,11 @@ return [
         'request_timeout' => env('OPENAI_REQUEST_TIMEOUT', 20),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'workspace_domain' => env('GOOGLE_WORKSPACE_DOMAIN'),
+    ],
+
 ];

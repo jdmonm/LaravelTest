@@ -1,15 +1,31 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleSocialAuthenticationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Library\AccessController;
 use App\Http\Controllers\Library\AssistantController;
 use App\Http\Controllers\Library\BookController;
 use App\Http\Controllers\Library\LoanController;
+use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard')->name('home');
 
+Route::middleware('guest')->group(function () {
+    Route::get('auth/google', [GoogleSocialAuthenticationController::class, 'redirect'])
+        ->middleware('throttle:google-social-auth')
+        ->name('auth.google.redirect');
+});
+
+Route::get('auth/google/callback', [GoogleSocialAuthenticationController::class, 'callback'])
+    ->middleware('throttle:google-social-auth')
+    ->name('auth.google.callback');
+
 Route::middleware(['auth'])->group(function () {
+    Route::get('settings/security/google', [GoogleSocialAuthenticationController::class, 'redirect'])
+        ->middleware([RequirePassword::class, 'throttle:google-social-auth'])
+        ->name('auth.google.link');
+
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('assistant', [AssistantController::class, 'index'])->name('assistant.index');
@@ -51,4 +67,4 @@ Route::middleware(['auth'])->group(function () {
         ->name('access.update');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

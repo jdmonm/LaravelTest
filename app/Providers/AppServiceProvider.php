@@ -72,5 +72,19 @@ class AppServiceProvider extends ServiceProvider
                 'library-assistant-confirmation:user:'.($request->user()?->getAuthIdentifier() ?? $request->ip()),
             );
         });
+
+        RateLimiter::for('google-social-auth', function (Request $request): array {
+            $limits = [
+                Limit::perMinute(10)->by('google-social-auth:ip:'.$request->ip()),
+            ];
+
+            if ($request->user()?->getAuthIdentifier() !== null) {
+                $limits[] = Limit::perMinute(5)->by(
+                    'google-social-auth:user:'.$request->user()->getAuthIdentifier(),
+                );
+            }
+
+            return $limits;
+        });
     }
 }

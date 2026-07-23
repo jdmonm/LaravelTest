@@ -10,10 +10,13 @@ import ManageTwoFactor from '@/components/ManageTwoFactor.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { link as googleLink } from '@/routes/auth/google';
 import { edit } from '@/routes/security';
 
 type Props = {
     passwordRules: string;
+    canLinkGoogle: boolean;
+    googleLinked: boolean;
 } & ManagePasskeysProps &
     ManageTwoFactorProps;
 
@@ -116,4 +119,20 @@ defineOptions({
         :canManagePasskeys="canManagePasskeys"
         :passkeys="passkeys"
     />
+
+    <div v-if="canLinkGoogle" class="space-y-4">
+        <Heading
+            variant="small"
+            title="Google sign-in"
+            :description="
+                googleLinked
+                    ? 'Your Google account is linked to this Library Desk account.'
+                    : 'Link Google to sign in without entering your Library Desk password.'
+            "
+        />
+
+        <Button v-if="!googleLinked" variant="outline" as-child>
+            <a :href="googleLink.url()">Link Google account</a>
+        </Button>
+    </div>
 </template>

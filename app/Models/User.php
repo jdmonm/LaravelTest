@@ -46,6 +46,16 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
+     * Get the external identities linked to this account.
+     *
+     * @return HasMany<SocialIdentity, $this>
+     */
+    public function socialIdentities(): HasMany
+    {
+        return $this->hasMany(SocialIdentity::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

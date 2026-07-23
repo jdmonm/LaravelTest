@@ -43,7 +43,7 @@ test('registration rolls back when the member role is unavailable', function () 
     Role::query()->where('name', LibraryRole::Member->value)->delete();
     app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-    expect(fn() => app(CreateNewUser::class)->create([
+    expect(fn () => app(CreateNewUser::class)->create([
         'name' => 'Missing Role User',
         'email' => 'missing-role@example.com',
         'password' => 'password',

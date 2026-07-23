@@ -11,7 +11,7 @@ Library Desk is a Laravel and Vue application for managing a small library catal
 - Dashboard metrics for titles, available copies, active loans, and overdue loans.
 - An authenticated Library assistant for live catalogue availability and permission-scoped loan workflows.
 - A local Model Context Protocol (MCP) server for live catalogue data and authenticated, non-mutating loan preparation.
-- Existing Laravel starter-kit authentication features, including passkeys and two-factor authentication.
+- Password sign-in, Google SSO, passkeys, and two-factor authentication.
 
 ## Roles
 
@@ -74,7 +74,7 @@ npm run build
 
 ## Library assistant and MCP
 
-The Library assistant is available at `/assistant` for authenticated, verified users. It can search the live catalogue, show availability, and show a user only their own loan history. Librarians and administrators can prepare a checkout, then explicitly confirm it in the application. The checkout itself reuses the normal inventory-safe transaction.
+The Library assistant is available at `/assistant` for authenticated users. It can search the live catalogue, show availability, and show a user only their own loan history. Librarians and administrators can prepare a checkout, then explicitly confirm it in the application. The checkout itself reuses the normal inventory-safe transaction.
 
 The assistant sends the current user message, a bounded recent conversation history, and data returned by permission-aware Library Desk tools to OpenAI. A member cannot receive another member's loans, and the model cannot perform a checkout directly. Conversation history is encrypted before it is stored in the encrypted server session and is discarded whenever the user's effective permissions change.
 
@@ -131,4 +131,28 @@ No public MCP HTTP route is registered. Exposing one requires a deliberate OAuth
 
 ## Authentication and SSO
 
-The application already includes session authentication, passkeys, and two-factor authentication from the Laravel starter kit. Role-based authorization is active for the library domain. An external SSO provider is intentionally not configured because it requires provider-specific client credentials and callback URLs; the role model and authenticated routes are ready to use with a future OIDC or SAML integration.
+Library Desk supports password sign-in, passkeys, two-factor authentication, and Google OAuth through Laravel Socialite. Email verification is not required for locally registered accounts; authorization always comes from the server-side role and permission checks.
+
+### Google SSO setup
+
+Create a Google Cloud OAuth 2.0 Web application and add the callback URL for every environment:
+
+```text
+http://localhost:8000/auth/google/callback
+https://your-production-domain.example/auth/google/callback
+```
+
+Set the following private environment variables locally and in the deployment platform. Do not commit the Google client secret:
+
+```dotenv
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI="${APP_URL}/auth/google/callback"
+# GOOGLE_WORKSPACE_DOMAIN=example.com
+```
+
+The Google button appears only when all three required variables are configured. A first-time Google user receives the `member` role. Google identities are keyed by Google's immutable subject identifier, not by email address. To prevent account takeover, an existing password account is never linked automatically merely because its email matches Google; the signed-in account owner must link Google from **Settings → Security** after confirming their password.
+
+Set `GOOGLE_WORKSPACE_DOMAIN` to restrict sign-in to one Google Workspace domain. The application validates Google's verified-email claim and, when configured, the returned Workspace domain claim.
+
+Vercel Authentication and Vercel Passport protect a deployment before Laravel runs; they do not replace the Library Desk session or role model. Use the Google OAuth setup above for application sign-in. For production, use a stable HTTPS custom domain in both `APP_URL` and Google's authorized redirect URI rather than a preview deployment URL.
