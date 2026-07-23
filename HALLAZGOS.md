@@ -11,7 +11,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P0 | Contrato de fechas de prestamos invalido en la vista Vue | Resuelto | Frontend / circulacion |
 | P0 | Middleware `verified` inefectivo para usuarios no verificados | Resuelto | Autenticacion |
 | P0 | Cuenta administradora demo con credenciales conocidas | Resuelto | Seguridad / seeders |
-| P1 | Carrera entre actualizacion de inventario y check-out | Pendiente | Dominio / concurrencia |
+| P1 | Carrera entre actualizacion de inventario y check-out | Resuelto | Dominio / concurrencia |
 | P1 | Registro depende de roles no sembrados y no es atomico | Pendiente | Provisionamiento / autenticacion |
 | P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Pendiente | Datos / cuentas |
 | P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Pendiente | Seguridad de cuenta |
@@ -54,12 +54,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 4. Carrera entre editar inventario y hacer check-out
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [BookController.php](app/Http/Controllers/Library/BookController.php), [CheckOutBook.php](app/Actions/Library/CheckOutBook.php)
 - **Severidad:** Alta
 - **Evidencia:** `CheckOutBook` usa transaccion y `lockForUpdate`, pero la actualizacion de libro cuenta prestamos activos y recalcula `available_copies` sin transaccion ni bloqueo de la fila.
 - **Impacto:** una edicion concurrente puede volver a marcar como disponible una copia ya prestada y permitir sobreprestamos.
-- **Correccion recomendada:** envolver la actualizacion de libro en `DB::transaction`, recargar con `lockForUpdate`, contar prestamos activos y actualizar el total y las copias disponibles bajo el mismo bloqueo.
-- **Prueba requerida:** una prueba de intercalado entre `CheckOutBook` y edicion de `total_copies` debe preservar `available_copies = total_copies - prestamos_activos`.
+- **Correccion aplicada:** la actualizacion del libro usa una transaccion y bloquea la fila de inventario antes de contar prestamos activos y recalcular disponibilidad. Check-out ya usa el mismo bloqueo de fila.
+- **Validacion aplicada:** una prueba HTTP redimensiona un libro con un prestamo activo y verifica que `available_copies = total_copies - prestamos_activos`.
 
 ### 5. Registro no atomico si los roles aun no existen
 
@@ -191,7 +192,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 ## Siguiente Orden de Trabajo
 
 1. Hacer atomico el registro con rol y asegurar el aprovisionamiento inicial.
-2. Corregir concurrencia de inventario y eliminacion de perfiles con prestamos.
+2. Corregir eliminacion de perfiles con prestamos.
 3. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
 4. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
 5. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.

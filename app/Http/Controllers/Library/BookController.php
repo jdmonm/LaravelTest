@@ -9,6 +9,7 @@ use App\Models\Book;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -62,16 +63,20 @@ class BookController extends Controller
     public function update(UpdateBookRequest $request, Book $book): RedirectResponse
     {
         $attributes = $request->validated();
-        $activeLoanCount = $book->activeLoans()->count();
 
-        if ($attributes['total_copies'] < $activeLoanCount) {
-            throw ValidationException::withMessages([
-                'total_copies' => "Cannot set copies below the {$activeLoanCount} active loan(s).",
-            ]);
-        }
+        DB::transaction(function () use ($attributes, $book): void {
+            $book = Book::query()->lockForUpdate()->findOrFail($book->id);
+            $activeLoanCount = $book->activeLoans()->count();
 
-        $attributes['available_copies'] = $attributes['total_copies'] - $activeLoanCount;
-        $book->update($attributes);
+            if ($attributes['total_copies'] < $activeLoanCount) {
+                throw ValidationException::withMessages([
+                    'total_copies' => "Cannot set copies below the {$activeLoanCount} active loan(s).",
+                ]);
+            }
+
+            $attributes['available_copies'] = $attributes['total_copies'] - $activeLoanCount;
+            $book->update($attributes);
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Book updated.']);
 

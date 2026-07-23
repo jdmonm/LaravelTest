@@ -77,6 +77,30 @@ test('librarians can add books and search the catalogue', function () {
             ->where('books.data.0.title', 'Kindred'));
 });
 
+test('updating inventory preserves availability for active loans', function () {
+    $librarian = libraryUser(LibraryRole::Librarian);
+    $borrower = libraryUser(LibraryRole::Member);
+    $book = Book::factory()->create([
+        'total_copies' => 3,
+        'available_copies' => 2,
+    ]);
+    Loan::factory()->for($book)->for($borrower, 'borrower')->create();
+
+    $this->actingAs($librarian)
+        ->patch(route('books.update', $book), [
+            'title' => $book->title,
+            'author' => $book->author,
+            'isbn' => $book->isbn,
+            'description' => $book->description,
+            'published_year' => $book->published_year,
+            'total_copies' => 4,
+        ])
+        ->assertRedirect(route('books.index'));
+
+    expect($book->refresh()->total_copies)->toBe(4)
+        ->and($book->available_copies)->toBe(3);
+});
+
 test('members only see their own loans', function () {
     $member = libraryUser(LibraryRole::Member);
     $otherMember = libraryUser(LibraryRole::Member);
