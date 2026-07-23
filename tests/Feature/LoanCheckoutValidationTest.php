@@ -6,6 +6,7 @@ use App\Models\Loan;
 use App\Models\User;
 use Database\Seeders\LibraryAuthorizationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
@@ -38,4 +39,15 @@ test('unavailable book checkout errors are associated with the selected book fie
         ->assertRedirect(route('loans.index'));
 
     expect(Loan::query()->count())->toBe(0);
+});
+
+test('loan form receives the server-calculated minimum due date', function () {
+    $librarian = User::factory()->create();
+    $librarian->assignRole(LibraryRole::Librarian);
+
+    $this->actingAs($librarian)
+        ->get(route('loans.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('library/LoansIndex')
+            ->where('minDueDate', today()->addDay()->toDateString()));
 });

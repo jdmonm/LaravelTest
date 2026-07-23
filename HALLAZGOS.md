@@ -17,7 +17,8 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Resuelto | Seguridad de cuenta |
 | P2 | Recuperacion, registro y confirmacion de contrasena requieren limites adicionales | Resuelto | Seguridad de cuenta |
 | P2 | Error de disponibilidad de libro no se muestra en checkout | Resuelto | Experiencia / frontend |
-| P2 | Formularios y mutaciones Vue tienen errores o estados pendientes incompletos | Pendiente | Experiencia / frontend |
+| P2 | Fecha limite seleccionable contradice la regla del servidor | Resuelto | Experiencia / frontend |
+| P2 | Mutaciones Vue no muestran estados pendientes ni errores contextuales | Pendiente | Experiencia / frontend |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
 ## P0 - Corregir Antes de Entrega
@@ -118,11 +119,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 10. Fecha limite seleccionable contradice la regla del servidor
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [LoansIndex.vue](resources/js/pages/library/LoansIndex.vue), [StoreLoanRequest.php](app/Http/Requests/Library/StoreLoanRequest.php)
 - **Severidad:** Media
 - **Evidencia:** el cliente permite seleccionar hoy, pero Laravel exige `after:today`.
 - **Impacto:** el usuario puede elegir una fecha que el servidor rechazara.
-- **Correccion recomendada:** entregar `min_due_date` desde Laravel, calculada con la zona horaria de negocio como manana, y usarla como `min` en el input.
+- **Correccion aplicada:** `LoanController` entrega `minDueDate`, calculada por Laravel como manana en la zona horaria configurada de la aplicacion. El input de checkout usa ese valor como minimo.
+- **Validacion aplicada:** una prueba de Inertia comprueba que el formulario recibe la fecha minima calculada por el servidor.
 
 ### 11. Mutaciones por fila no muestran estado pendiente ni error contextual
 

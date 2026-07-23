@@ -93,6 +93,7 @@ class LoanController extends Controller
                 'status' => $status,
             ],
             'canManageLoans' => $canManageLoans,
+            'minDueDate' => today()->addDay()->toDateString(),
             'availableBooks' => $canManageLoans
                 ? Book::query()
                     ->where('available_copies', '>', 0)

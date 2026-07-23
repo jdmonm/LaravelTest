@@ -67,6 +67,7 @@ const props = defineProps<{
         status: string;
     };
     canManageLoans: boolean;
+    minDueDate: string;
     availableBooks: BookOption[];
     members: MemberOption[];
 }>();
@@ -89,7 +90,6 @@ defineOptions({
 const search = ref(props.filters.search);
 const selectedStatus = ref(props.filters.status || 'all');
 const isCheckoutDialogOpen = ref(false);
-const today = new Date().toISOString().slice(0, 10);
 const checkoutForm = useForm({
     book_id: '',
     borrower_id: '',
@@ -423,7 +423,7 @@ function paginationLabel(label: string): string {
                         id="due-at"
                         v-model="checkoutForm.due_at"
                         type="date"
-                        :min="today"
+                        :min="minDueDate"
                     />
                     <InputError :message="checkoutForm.errors.due_at" />
                 </div>
