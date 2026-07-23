@@ -28,6 +28,29 @@ test('reset password link can be requested', function () {
     Notification::assertSentTo($user, ResetPassword::class);
 });
 
+test('password reset requests have the same public response for unknown email addresses', function () {
+    $user = User::factory()->create();
+
+    $knownEmailResponse = $this->post(route('password.email'), ['email' => $user->email]);
+    $unknownEmailResponse = $this->post(route('password.email'), ['email' => 'unknown@example.com']);
+
+    $knownEmailResponse
+        ->assertRedirect()
+        ->assertSessionHas('status', trans('passwords.sent'));
+    $unknownEmailResponse
+        ->assertRedirect()
+        ->assertSessionHas('status', trans('passwords.sent'));
+});
+
+test('password reset requests are rate limited by email and IP address', function () {
+    $payload = ['email' => 'reset-limit@example.com'];
+
+    $this->post(route('password.email'), $payload)->assertRedirect();
+    $this->post(route('password.email'), $payload)->assertRedirect();
+    $this->post(route('password.email'), $payload)->assertRedirect();
+    $this->post(route('password.email'), $payload)->assertStatus(429);
+});
+
 test('reset password screen can be rendered', function () {
     Notification::fake();
 

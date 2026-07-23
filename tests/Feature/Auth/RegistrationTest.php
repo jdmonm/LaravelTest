@@ -60,3 +60,18 @@ test('registration rolls back when the member role is unavailable', function () 
 
     expect(User::query()->where('email', 'missing-role@example.com')->exists())->toBeFalse();
 });
+
+test('registration requests are rate limited by IP address', function () {
+    $payload = [
+        'name' => 'Rate Limited User',
+        'email' => 'invalid-email',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ];
+
+    for ($attempt = 0; $attempt < 5; $attempt++) {
+        $this->post(route('register.store'), $payload)->assertSessionHasErrors('email');
+    }
+
+    $this->post(route('register.store'), $payload)->assertStatus(429);
+});

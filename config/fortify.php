@@ -101,7 +101,10 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    'middleware' => [
+        'web',
+        \App\Http\Middleware\ThrottleSensitiveAuthenticationRequests::class,
+    ],
 
     /*
     |--------------------------------------------------------------------------

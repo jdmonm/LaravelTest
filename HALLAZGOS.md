@@ -15,6 +15,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P1 | Registro depende de roles no sembrados y no es atomico | Resuelto | Provisionamiento / autenticacion |
 | P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Resuelto | Datos / cuentas |
 | P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Resuelto | Seguridad de cuenta |
+| P2 | Recuperacion, registro y confirmacion de contrasena requieren limites adicionales | Resuelto | Seguridad de cuenta |
 | P2 | Formularios y mutaciones Vue tienen errores o estados pendientes incompletos | Pendiente | Experiencia / frontend |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
@@ -96,12 +97,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 8. Recuperacion, registro y confirmacion de contrasena requieren limites adicionales
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [FortifyServiceProvider.php](app/Providers/FortifyServiceProvider.php), rutas de Fortify
 - **Severidad:** Baja
 - **Evidencia:** la recuperacion de contrasena revela respuestas diferentes para emails existentes e inexistentes, y no hay limites especificos por IP para recuperacion, registro y confirmacion de contrasena.
 - **Impacto:** enumeracion de cuentas, abuso de correos de reset, creacion masiva de cuentas e intentos repetidos sobre una sesion comprometida.
-- **Correccion recomendada:** usar respuestas indistinguibles para reset y registrar `RateLimiter` por IP/email segun el flujo.
-- **Prueba requerida:** comprobar respuestas equivalentes y `429` despues del limite configurado.
+- **Correccion aplicada:** la recuperacion de contrasena devuelve el mismo mensaje publico para emails existentes e inexistentes. Un middleware selectivo aplica limites nombrados a recuperacion por email e IP, registro por IP y confirmacion de contrasena por cuenta e IP.
+- **Validacion aplicada:** las pruebas comparan ambas respuestas de recuperacion y comprueban `429` al exceder cada limite.
 
 ### 9. Error de disponibilidad de libro no se muestra en checkout
 
@@ -194,7 +196,6 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Siguiente Orden de Trabajo
 
-1. Agregar limites de tasa y respuestas no enumerables para autenticacion.
-2. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
-3. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
-4. Dejar `composer lint:check` en verde.
+1. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
+2. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
+3. Dejar `composer lint:check` en verde.
