@@ -1,0 +1,122 @@
+<?php
+
+use App\Enums\LibraryRole;
+use App\Models\Book;
+use App\Models\Loan;
+use App\Models\User;
+use Database\Seeders\LibraryAuthorizationSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->seed(LibraryAuthorizationSeeder::class);
+});
+
+function libraryUser(LibraryRole $role): User
+{
+    $user = User::factory()->create();
+    $user->assignRole($role);
+
+    return $user;
+}
+
+test('members can browse the catalogue but cannot create books', function () {
+    Book::factory()->create(['title' => 'The Left Hand of Darkness']);
+    $member = libraryUser(LibraryRole::Member);
+
+    $this->actingAs($member)
+        ->get(route('books.index'))
+        ->assertInertia(fn(Assert $page) => $page
+            ->component('library/BooksIndex')
+            ->has('books.data', 1));
+
+    $this->actingAs($member)
+        ->post(route('books.store'), [
+            'title' => 'A Memory Called Empire',
+            'author' => 'Arkady Martine',
+            'total_copies' => 2,
+        ])
+        ->assertForbidden();
+});
+
+test('librarians can add books and search the catalogue', function () {
+    $librarian = libraryUser(LibraryRole::Librarian);
+    Book::factory()->create(['title' => 'The Dispossessed', 'author' => 'Ursula K. Le Guin']);
+
+    $this->actingAs($librarian)
+        ->post(route('books.store'), [
+            'title' => 'Kindred',
+            'author' => 'Octavia E. Butler',
+            'isbn' => '9780807083697',
+            'total_copies' => 3,
+        ])
+        ->assertRedirect(route('books.index'));
+
+    $this->assertDatabaseHas('books', [
+        'title' => 'Kindred',
+        'available_copies' => 3,
+    ]);
+
+    $this->actingAs($librarian)
+        ->get(route('books.index', ['search' => 'Kindred']))
+        ->assertInertia(fn(Assert $page) => $page
+            ->component('library/BooksIndex')
+            ->has('books.data', 1)
+            ->where('books.data.0.title', 'Kindred'));
+});
+
+test('members only see their own loans', function () {
+    $member = libraryUser(LibraryRole::Member);
+    $otherMember = libraryUser(LibraryRole::Member);
+    $ownLoan = Loan::factory()->for($member, 'borrower')->create();
+    Loan::factory()->for($otherMember, 'borrower')->create();
+
+    $this->actingAs($member)
+        ->get(route('loans.index'))
+        ->assertInertia(fn(Assert $page) => $page
+            ->component('library/LoansIndex')
+            ->has('loans.data', 1)
+            ->where('loans.data.0.id', $ownLoan->id)
+            ->where('canManageLoans', false));
+});
+
+test('librarians can check books out and back in', function () {
+    $librarian = libraryUser(LibraryRole::Librarian);
+    $member = libraryUser(LibraryRole::Member);
+    $book = Book::factory()->create([
+        'total_copies' => 1,
+        'available_copies' => 1,
+    ]);
+
+    $this->actingAs($librarian)
+        ->post(route('loans.store'), [
+            'book_id' => $book->id,
+            'borrower_id' => $member->id,
+            'due_at' => now()->addWeek()->toDateString(),
+        ])
+        ->assertRedirect(route('loans.index'));
+
+    expect($book->refresh()->available_copies)->toBe(0);
+
+    $loan = Loan::query()->sole();
+
+    $this->actingAs($librarian)
+        ->patch(route('loans.check-in', $loan))
+        ->assertRedirect(route('loans.index'));
+
+    expect($book->refresh()->available_copies)->toBe(1)
+        ->and($loan->refresh()->returned_at)->not->toBeNull();
+});
+
+test('administrators can change a member role', function () {
+    $admin = libraryUser(LibraryRole::Admin);
+    $member = libraryUser(LibraryRole::Member);
+
+    $this->actingAs($admin)
+        ->patch(route('access.update', $member), ['role' => LibraryRole::Librarian->value])
+        ->assertRedirect(route('access.index'));
+
+    expect($member->fresh()->hasRole(LibraryRole::Librarian))->toBeTrue();
+});
