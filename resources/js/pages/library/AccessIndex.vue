@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { KeyRound, Search, ShieldCheck } from '@lucide/vue';
 import type { AcceptableValue } from 'reka-ui';
 import { ref } from 'vue';
 import Heading from '@/components/Heading.vue';
+import type { PaginationLink } from '@/components/LibraryPagination.vue';
+import LibraryPagination from '@/components/LibraryPagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,12 +26,6 @@ type Member = {
     name: string;
     email: string;
     roles: string[];
-};
-
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
 };
 
 type PaginatedUsers = {
@@ -98,13 +94,6 @@ function updateRole(member: Member, role: AcceptableValue): void {
 
 function roleLabel(role: string): string {
     return role.charAt(0).toUpperCase() + role.slice(1);
-}
-
-function paginationLabel(label: string): string {
-    return label
-        .replace('&laquo; Previous', 'Previous')
-        .replace('Next &raquo;', 'Next')
-        .replace(/&laquo;|&raquo;/g, '');
 }
 </script>
 
@@ -257,26 +246,6 @@ function paginationLabel(label: string): string {
             </div>
         </div>
 
-        <nav
-            v-if="users.links.length > 3"
-            class="flex flex-wrap justify-center gap-1"
-            aria-label="Member pages"
-        >
-            <template v-for="link in users.links" :key="link.label">
-                <Button v-if="!link.url" variant="ghost" size="sm" disabled>
-                    {{ paginationLabel(link.label) }}
-                </Button>
-                <Button
-                    v-else
-                    as-child
-                    :variant="link.active ? 'default' : 'outline'"
-                    size="sm"
-                >
-                    <Link :href="link.url" preserve-scroll>
-                        {{ paginationLabel(link.label) }}
-                    </Link>
-                </Button>
-            </template>
-        </nav>
+        <LibraryPagination :links="users.links" ariaLabel="Member pages" />
     </div>
 </template>

@@ -20,6 +20,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P2 | Fecha limite seleccionable contradice la regla del servidor | Resuelto | Experiencia / frontend |
 | P2 | Mutaciones Vue no muestran estados pendientes ni errores contextuales | Resuelto | Experiencia / frontend |
 | P3 | Rutas literales en paginas Vue en lugar de Wayfinder | Resuelto | Mantenibilidad |
+| P3 | Paginacion repetida en tres paginas | Resuelto | Mantenibilidad |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
 ## P0 - Corregir Antes de Entrega
@@ -152,11 +153,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 13. Paginacion repetida en tres paginas
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [BooksIndex.vue](resources/js/pages/library/BooksIndex.vue), [LoansIndex.vue](resources/js/pages/library/LoansIndex.vue), [AccessIndex.vue](resources/js/pages/library/AccessIndex.vue)
 - **Severidad:** Baja
 - **Evidencia:** las tres paginas repiten el mismo contrato de enlaces, conversion de etiquetas y estructura de navegacion.
 - **Impacto:** cambios de accesibilidad, localizacion o comportamiento se deben mantener en tres lugares.
-- **Correccion recomendada:** extraer `LibraryPagination.vue` con `links` y `ariaLabel`, junto con un tipo compartido `PaginationLink`.
+- **Correccion aplicada:** `LibraryPagination.vue` centraliza el tipo `PaginationLink`, las etiquetas de pagina, el estado activo/deshabilitado y la navegacion accesible. Cada pagina conserva solo su lista de enlaces y etiqueta ARIA.
+- **Validacion aplicada:** la comprobacion de tipos verifica las props compartidas desde catalogo, prestamos y acceso.
 
 ### 14. Jerarquia de encabezados incompleta
 

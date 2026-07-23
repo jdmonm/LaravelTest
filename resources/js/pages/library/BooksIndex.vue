@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { BookOpen, Pencil, Plus, Search, Trash2 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import type { PaginationLink } from '@/components/LibraryPagination.vue';
+import LibraryPagination from '@/components/LibraryPagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,12 +35,6 @@ type Book = {
     published_year: number | null;
     total_copies: number;
     available_copies: number;
-};
-
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
 };
 
 type PaginatedBooks = {
@@ -162,13 +158,6 @@ function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
     }
 
     return 'default';
-}
-
-function paginationLabel(label: string): string {
-    return label
-        .replace('&laquo; Previous', 'Previous')
-        .replace('Next &raquo;', 'Next')
-        .replace(/&laquo;|&raquo;/g, '');
 }
 </script>
 
@@ -318,27 +307,7 @@ function paginationLabel(label: string): string {
             </div>
         </div>
 
-        <nav
-            v-if="books.links.length > 3"
-            class="flex flex-wrap justify-center gap-1"
-            aria-label="Catalogue pages"
-        >
-            <template v-for="link in books.links" :key="link.label">
-                <Button v-if="!link.url" variant="ghost" size="sm" disabled>
-                    {{ paginationLabel(link.label) }}
-                </Button>
-                <Button
-                    v-else
-                    as-child
-                    :variant="link.active ? 'default' : 'outline'"
-                    size="sm"
-                >
-                    <Link :href="link.url" preserve-scroll>
-                        {{ paginationLabel(link.label) }}
-                    </Link>
-                </Button>
-            </template>
-        </nav>
+        <LibraryPagination :links="books.links" ariaLabel="Catalogue pages" />
     </div>
 
     <Dialog v-model:open="isDialogOpen">

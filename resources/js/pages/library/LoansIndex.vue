@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { Check, ClipboardList, Plus, Search } from '@lucide/vue';
 import type { AcceptableValue } from 'reka-ui';
 import { computed, ref } from 'vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import type { PaginationLink } from '@/components/LibraryPagination.vue';
+import LibraryPagination from '@/components/LibraryPagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -54,12 +56,6 @@ type Loan = {
     due_at: string | null;
     returned_at: string | null;
     is_overdue: boolean;
-};
-
-type PaginationLink = {
-    url: string | null;
-    label: string;
-    active: boolean;
 };
 
 type PaginatedLoans = {
@@ -198,13 +194,6 @@ function formatDate(value: string | null): string {
         day: 'numeric',
         year: 'numeric',
     }).format(new Date(year, month - 1, day));
-}
-
-function paginationLabel(label: string): string {
-    return label
-        .replace('&laquo; Previous', 'Previous')
-        .replace('Next &raquo;', 'Next')
-        .replace(/&laquo;|&raquo;/g, '');
 }
 </script>
 
@@ -385,27 +374,7 @@ function paginationLabel(label: string): string {
             </div>
         </div>
 
-        <nav
-            v-if="loans.links.length > 3"
-            class="flex flex-wrap justify-center gap-1"
-            aria-label="Loan pages"
-        >
-            <template v-for="link in loans.links" :key="link.label">
-                <Button v-if="!link.url" variant="ghost" size="sm" disabled>
-                    {{ paginationLabel(link.label) }}
-                </Button>
-                <Button
-                    v-else
-                    as-child
-                    :variant="link.active ? 'default' : 'outline'"
-                    size="sm"
-                >
-                    <Link :href="link.url" preserve-scroll>
-                        {{ paginationLabel(link.label) }}
-                    </Link>
-                </Button>
-            </template>
-        </nav>
+        <LibraryPagination :links="loans.links" ariaLabel="Loan pages" />
     </div>
 
     <Dialog v-model:open="isCheckoutDialogOpen">
