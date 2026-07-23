@@ -1,0 +1,444 @@
+<script setup lang="ts">
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Check, ClipboardList, Plus, Search } from '@lucide/vue';
+import type { AcceptableValue } from 'reka-ui';
+import { computed, ref } from 'vue';
+import Heading from '@/components/Heading.vue';
+import InputError from '@/components/InputError.vue';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { dashboard } from '@/routes';
+
+type BookOption = {
+    id: number;
+    title: string;
+    author: string;
+    available_copies?: number;
+};
+
+type MemberOption = {
+    id: number;
+    name: string;
+    email: string;
+};
+
+type Loan = {
+    id: number;
+    book: BookOption;
+    borrower: MemberOption;
+    checked_out_at: string;
+    due_at: string | null;
+    returned_at: string | null;
+};
+
+type PaginationLink = {
+    url: string | null;
+    label: string;
+    active: boolean;
+};
+
+type PaginatedLoans = {
+    data: Loan[];
+    links: PaginationLink[];
+};
+
+const props = defineProps<{
+    loans: PaginatedLoans;
+    filters: {
+        search: string;
+        status: string;
+    };
+    canManageLoans: boolean;
+    availableBooks: BookOption[];
+    members: MemberOption[];
+}>();
+
+defineOptions({
+    layout: {
+        breadcrumbs: [
+            {
+                title: 'Dashboard',
+                href: dashboard(),
+            },
+            {
+                title: 'Loans',
+                href: '/loans',
+            },
+        ],
+    },
+});
+
+const search = ref(props.filters.search);
+const selectedStatus = ref(props.filters.status || 'all');
+const isCheckoutDialogOpen = ref(false);
+const today = new Date().toISOString().slice(0, 10);
+const checkoutForm = useForm({
+    book_id: '',
+    borrower_id: '',
+    due_at: '',
+});
+
+const visibleStatusLabel = computed(() => {
+    if (selectedStatus.value === 'all') {
+        return 'All statuses';
+    }
+
+    return (
+        selectedStatus.value.charAt(0).toUpperCase() +
+        selectedStatus.value.slice(1)
+    );
+});
+
+function updateFilters(status = selectedStatus.value): void {
+    router.get(
+        '/loans',
+        {
+            search: search.value || undefined,
+            status: status === 'all' ? undefined : status,
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+        },
+    );
+}
+
+function setStatus(status: AcceptableValue): void {
+    if (status === null) {
+        return;
+    }
+
+    selectedStatus.value = String(status);
+    updateFilters(selectedStatus.value);
+}
+
+function openCheckoutDialog(): void {
+    checkoutForm.reset();
+    checkoutForm.clearErrors();
+    isCheckoutDialogOpen.value = true;
+}
+
+function submitCheckout(): void {
+    checkoutForm.post('/loans', {
+        preserveScroll: true,
+        onSuccess: () => {
+            isCheckoutDialogOpen.value = false;
+        },
+    });
+}
+
+function checkIn(loan: Loan): void {
+    router.patch(`/loans/${loan.id}/check-in`, {}, { preserveScroll: true });
+}
+
+function isOverdue(loan: Loan): boolean {
+    return Boolean(
+        !loan.returned_at &&
+        loan.due_at &&
+        new Date(`${loan.due_at}T23:59:59`).getTime() < Date.now(),
+    );
+}
+
+function loanStatus(loan: Loan): string {
+    if (loan.returned_at) {
+        return 'Returned';
+    }
+
+    return isOverdue(loan) ? 'Overdue' : 'On loan';
+}
+
+function statusVariant(loan: Loan): 'default' | 'secondary' | 'destructive' {
+    if (isOverdue(loan)) {
+        return 'destructive';
+    }
+
+    return loan.returned_at ? 'secondary' : 'default';
+}
+
+function formatDate(value: string | null): string {
+    if (!value) {
+        return 'No due date';
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    }).format(new Date(`${value}T12:00:00`));
+}
+
+function paginationLabel(label: string): string {
+    return label
+        .replace('&laquo; Previous', 'Previous')
+        .replace('Next &raquo;', 'Next')
+        .replace(/&laquo;|&raquo;/g, '');
+}
+</script>
+
+<template>
+    <Head title="Loans" />
+
+    <div class="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-6 p-4 md:p-6">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+        >
+            <Heading
+                title="Loans"
+                :description="
+                    canManageLoans
+                        ? 'Track check-outs, returns, and due dates.'
+                        : 'Review your current and past loans.'
+                "
+            />
+            <Button v-if="canManageLoans" @click="openCheckoutDialog">
+                <Plus />
+                Check out book
+            </Button>
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <form
+                class="flex min-w-0 flex-1 gap-2"
+                @submit.prevent="updateFilters()"
+            >
+                <div class="relative min-w-0 flex-1">
+                    <Search
+                        class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                        v-model="search"
+                        class="pl-9"
+                        placeholder="Search books or borrowers"
+                        aria-label="Search loans"
+                    />
+                </div>
+                <Button type="submit" variant="outline">Search</Button>
+            </form>
+
+            <Select
+                :model-value="selectedStatus"
+                @update:model-value="setStatus"
+            >
+                <SelectTrigger class="w-full sm:w-42">
+                    <SelectValue :placeholder="visibleStatusLabel" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                    <SelectItem value="returned">Returned</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+
+        <div class="overflow-hidden rounded-lg border">
+            <div
+                v-if="loans.data.length === 0"
+                class="flex min-h-72 flex-col items-center justify-center gap-3 px-6 text-center"
+            >
+                <ClipboardList class="size-8 text-muted-foreground" />
+                <div>
+                    <p class="font-medium">No loans found</p>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        {{
+                            canManageLoans
+                                ? 'Check out a book when a member is ready.'
+                                : 'Your borrowing history will appear here.'
+                        }}
+                    </p>
+                </div>
+                <Button
+                    v-if="canManageLoans"
+                    variant="outline"
+                    @click="openCheckoutDialog"
+                >
+                    <Plus />
+                    Check out book
+                </Button>
+            </div>
+
+            <div v-else class="overflow-x-auto">
+                <table class="w-full min-w-180 text-left text-sm">
+                    <thead
+                        class="border-b bg-muted/40 text-xs text-muted-foreground uppercase"
+                    >
+                        <tr>
+                            <th class="px-4 py-3 font-medium">Book</th>
+                            <th class="px-4 py-3 font-medium">Borrower</th>
+                            <th class="px-4 py-3 font-medium">Due date</th>
+                            <th class="px-4 py-3 font-medium">Status</th>
+                            <th
+                                v-if="canManageLoans"
+                                class="w-24 px-4 py-3 text-right font-medium"
+                            >
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr
+                            v-for="loan in loans.data"
+                            :key="loan.id"
+                            class="hover:bg-muted/30"
+                        >
+                            <td class="px-4 py-4 align-top">
+                                <p class="font-medium">{{ loan.book.title }}</p>
+                                <p class="mt-1 text-xs text-muted-foreground">
+                                    {{ loan.book.author }}
+                                </p>
+                            </td>
+                            <td class="px-4 py-4 align-top">
+                                <p>{{ loan.borrower.name }}</p>
+                                <p class="mt-1 text-xs text-muted-foreground">
+                                    {{ loan.borrower.email }}
+                                </p>
+                            </td>
+                            <td
+                                class="px-4 py-4 align-top text-muted-foreground"
+                            >
+                                {{ formatDate(loan.due_at) }}
+                            </td>
+                            <td class="px-4 py-4 align-top">
+                                <Badge :variant="statusVariant(loan)">
+                                    {{ loanStatus(loan) }}
+                                </Badge>
+                            </td>
+                            <td
+                                v-if="canManageLoans"
+                                class="px-4 py-4 align-top"
+                            >
+                                <div class="flex justify-end">
+                                    <Button
+                                        v-if="!loan.returned_at"
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        :title="`Check in ${loan.book.title}`"
+                                        @click="checkIn(loan)"
+                                    >
+                                        <Check />
+                                        <span class="sr-only"
+                                            >Check in
+                                            {{ loan.book.title }}</span
+                                        >
+                                    </Button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <nav
+            v-if="loans.links.length > 3"
+            class="flex flex-wrap justify-center gap-1"
+            aria-label="Loan pages"
+        >
+            <template v-for="link in loans.links" :key="link.label">
+                <Button v-if="!link.url" variant="ghost" size="sm" disabled>
+                    {{ paginationLabel(link.label) }}
+                </Button>
+                <Button
+                    v-else
+                    as-child
+                    :variant="link.active ? 'default' : 'outline'"
+                    size="sm"
+                >
+                    <Link :href="link.url" preserve-scroll>
+                        {{ paginationLabel(link.label) }}
+                    </Link>
+                </Button>
+            </template>
+        </nav>
+    </div>
+
+    <Dialog v-model:open="isCheckoutDialogOpen">
+        <DialogContent class="sm:max-w-lg">
+            <DialogHeader>
+                <DialogTitle>Check out a book</DialogTitle>
+                <DialogDescription>
+                    Select an available title and the member borrowing it.
+                </DialogDescription>
+            </DialogHeader>
+
+            <form class="grid gap-5" @submit.prevent="submitCheckout">
+                <div class="grid gap-2">
+                    <Label for="book">Book</Label>
+                    <Select v-model="checkoutForm.book_id">
+                        <SelectTrigger id="book" class="w-full">
+                            <SelectValue
+                                placeholder="Choose an available book"
+                            />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="book in availableBooks"
+                                :key="book.id"
+                                :value="String(book.id)"
+                            >
+                                {{ book.title }} ({{ book.available_copies }}
+                                available)
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <InputError :message="checkoutForm.errors.book_id" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="borrower">Member</Label>
+                    <Select v-model="checkoutForm.borrower_id">
+                        <SelectTrigger id="borrower" class="w-full">
+                            <SelectValue placeholder="Choose a member" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem
+                                v-for="member in members"
+                                :key="member.id"
+                                :value="String(member.id)"
+                            >
+                                {{ member.name }} - {{ member.email }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <InputError :message="checkoutForm.errors.borrower_id" />
+                </div>
+
+                <div class="grid gap-2">
+                    <Label for="due-at">Due date</Label>
+                    <Input
+                        id="due-at"
+                        v-model="checkoutForm.due_at"
+                        type="date"
+                        :min="today"
+                    />
+                    <InputError :message="checkoutForm.errors.due_at" />
+                </div>
+
+                <DialogFooter>
+                    <Button type="submit" :disabled="checkoutForm.processing">
+                        Check out
+                    </Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+    </Dialog>
+</template>
