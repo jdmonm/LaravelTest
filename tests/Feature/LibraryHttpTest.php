@@ -22,6 +22,16 @@ function libraryUser(LibraryRole $role): User
     return $user;
 }
 
+test('unverified users are redirected away from Library Desk routes', function () {
+    $user = User::factory()->unverified()->create();
+
+    foreach (['dashboard', 'books.index', 'loans.index', 'access.index'] as $route) {
+        $this->actingAs($user)
+            ->get(route($route))
+            ->assertRedirect(route('verification.notice'));
+    }
+});
+
 test('members can browse the catalogue but cannot create books', function () {
     Book::factory()->create(['title' => 'The Left Hand of Darkness']);
     $member = libraryUser(LibraryRole::Member);

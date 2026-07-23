@@ -9,7 +9,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | Prioridad | Hallazgo | Estado | Area |
 | --- | --- | --- | --- |
 | P0 | Contrato de fechas de prestamos invalido en la vista Vue | Resuelto | Frontend / circulacion |
-| P0 | Middleware `verified` inefectivo para usuarios no verificados | Pendiente | Autenticacion |
+| P0 | Middleware `verified` inefectivo para usuarios no verificados | Resuelto | Autenticacion |
 | P0 | Cuenta administradora demo con credenciales conocidas | Pendiente | Seguridad / seeders |
 | P1 | Carrera entre actualizacion de inventario y check-out | Pendiente | Dominio / concurrencia |
 | P1 | Registro depende de roles no sembrados y no es atomico | Pendiente | Provisionamiento / autenticacion |
@@ -32,12 +32,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 2. La verificacion de correo no protege las rutas `verified`
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [User.php](app/Models/User.php), [web.php](routes/web.php), [fortify.php](config/fortify.php)
 - **Severidad:** Alta
 - **Evidencia:** `User` no implementa `Illuminate\Contracts\Auth\MustVerifyEmail`. Laravel solo bloquea usuarios no verificados mediante el middleware `verified` cuando el modelo implementa ese contrato.
 - **Impacto:** un usuario nuevo sin correo verificado puede entrar a dashboard, catalogo y prestamos. Tampoco se dispara el flujo esperado de notificacion de verificacion.
-- **Correccion recomendada:** implementar `MustVerifyEmail` en `User` y conservar el middleware `verified` existente.
-- **Prueba requerida:** un usuario no verificado debe ser redirigido o bloqueado en cada ruta protegida; un usuario nuevo debe recibir la notificacion de verificacion.
+- **Correccion aplicada:** `User` implementa `MustVerifyEmail`, activando el middleware `verified` y la notificacion de Fortify ya configurados.
+- **Validacion aplicada:** una prueba cubre el bloqueo de dashboard, catalogo, prestamos y acceso para usuarios no verificados; el registro verifica el envio de `VerifyEmail`.
 
 ### 3. Seeder demo puede exponer o elevar una cuenta administradora
 
@@ -188,10 +189,9 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Siguiente Orden de Trabajo
 
-1. Activar correctamente la verificacion de correo y sus pruebas.
-2. Separar y restringir seeders demo; hacer atomico el registro con rol.
-3. Corregir concurrencia de inventario y eliminacion de perfiles con prestamos.
-4. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
-5. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
-6. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
-7. Dejar `composer lint:check` en verde.
+1. Separar y restringir seeders demo; hacer atomico el registro con rol.
+2. Corregir concurrencia de inventario y eliminacion de perfiles con prestamos.
+3. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
+4. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
+5. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
+6. Dejar `composer lint:check` en verde.

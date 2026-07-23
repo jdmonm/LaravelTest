@@ -3,7 +3,9 @@
 use App\Enums\LibraryRole;
 use App\Models\User;
 use Database\Seeders\LibraryAuthorizationSeeder;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
 uses(RefreshDatabase::class);
@@ -20,6 +22,8 @@ test('registration screen can be rendered', function () {
 });
 
 test('new users can register', function () {
+    Notification::fake();
+
     $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -32,4 +36,9 @@ test('new users can register', function () {
 
     expect(User::query()->where('email', 'test@example.com')->sole()->hasRole(LibraryRole::Member))
         ->toBeTrue();
+
+    Notification::assertSentTo(
+        User::query()->where('email', 'test@example.com')->sole(),
+        VerifyEmail::class,
+    );
 });
