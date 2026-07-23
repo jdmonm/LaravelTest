@@ -66,6 +66,24 @@ class LoanController extends Controller
             })
             ->latest('checked_out_at')
             ->paginate(15)
+            ->through(static fn (Loan $loan): array => [
+                'id' => $loan->id,
+                'book' => [
+                    'id' => $loan->book->id,
+                    'title' => $loan->book->title,
+                    'author' => $loan->book->author,
+                    'isbn' => $loan->book->isbn,
+                ],
+                'borrower' => [
+                    'id' => $loan->borrower->id,
+                    'name' => $loan->borrower->name,
+                    'email' => $loan->borrower->email,
+                ],
+                'checked_out_at' => $loan->checked_out_at?->toDateString(),
+                'due_at' => $loan->due_at?->toDateString(),
+                'returned_at' => $loan->returned_at?->toDateString(),
+                'is_overdue' => $loan->isOverdue(),
+            ])
             ->withQueryString();
 
         return Inertia::render('library/LoansIndex', [
@@ -77,9 +95,9 @@ class LoanController extends Controller
             'canManageLoans' => $canManageLoans,
             'availableBooks' => $canManageLoans
                 ? Book::query()
-                ->where('available_copies', '>', 0)
-                ->orderBy('title')
-                ->get(['id', 'title', 'author', 'available_copies'])
+                    ->where('available_copies', '>', 0)
+                    ->orderBy('title')
+                    ->get(['id', 'title', 'author', 'available_copies'])
                 : [],
             'members' => $canManageLoans
                 ? User::query()->orderBy('name')->get(['id', 'name', 'email'])

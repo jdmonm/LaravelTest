@@ -43,9 +43,10 @@ type Loan = {
     id: number;
     book: BookOption;
     borrower: MemberOption;
-    checked_out_at: string;
+    checked_out_at: string | null;
     due_at: string | null;
     returned_at: string | null;
+    is_overdue: boolean;
 };
 
 type PaginationLink = {
@@ -149,24 +150,16 @@ function checkIn(loan: Loan): void {
     router.patch(`/loans/${loan.id}/check-in`, {}, { preserveScroll: true });
 }
 
-function isOverdue(loan: Loan): boolean {
-    return Boolean(
-        !loan.returned_at &&
-        loan.due_at &&
-        new Date(`${loan.due_at}T23:59:59`).getTime() < Date.now(),
-    );
-}
-
 function loanStatus(loan: Loan): string {
     if (loan.returned_at) {
         return 'Returned';
     }
 
-    return isOverdue(loan) ? 'Overdue' : 'On loan';
+    return loan.is_overdue ? 'Overdue' : 'On loan';
 }
 
 function statusVariant(loan: Loan): 'default' | 'secondary' | 'destructive' {
-    if (isOverdue(loan)) {
+    if (loan.is_overdue) {
         return 'destructive';
     }
 
@@ -178,11 +171,13 @@ function formatDate(value: string | null): string {
         return 'No due date';
     }
 
+    const [year = 0, month = 1, day = 1] = value.split('-').map(Number);
+
     return new Intl.DateTimeFormat(undefined, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
-    }).format(new Date(`${value}T12:00:00`));
+    }).format(new Date(year, month - 1, day));
 }
 
 function paginationLabel(label: string): string {

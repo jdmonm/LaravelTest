@@ -28,7 +28,7 @@ test('members can browse the catalogue but cannot create books', function () {
 
     $this->actingAs($member)
         ->get(route('books.index'))
-        ->assertInertia(fn(Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page
             ->component('library/BooksIndex')
             ->has('books.data', 1));
 
@@ -61,7 +61,7 @@ test('librarians can add books and search the catalogue', function () {
 
     $this->actingAs($librarian)
         ->get(route('books.index', ['search' => 'Kindred']))
-        ->assertInertia(fn(Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page
             ->component('library/BooksIndex')
             ->has('books.data', 1)
             ->where('books.data.0.title', 'Kindred'));
@@ -75,11 +75,39 @@ test('members only see their own loans', function () {
 
     $this->actingAs($member)
         ->get(route('loans.index'))
-        ->assertInertia(fn(Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page
             ->component('library/LoansIndex')
             ->has('loans.data', 1)
             ->where('loans.data.0.id', $ownLoan->id)
             ->where('canManageLoans', false));
+});
+
+test('loan responses provide date-only values and a server-calculated overdue status', function () {
+    $librarian = libraryUser(LibraryRole::Librarian);
+    $borrower = libraryUser(LibraryRole::Member);
+    $book = Book::factory()->create();
+    $overdueLoan = Loan::factory()->for($book)->for($borrower, 'borrower')->create([
+        'checked_out_at' => now()->subDays(2),
+        'due_at' => now()->subDay(),
+    ]);
+    $returnedLoan = Loan::factory()->for($book)->for($borrower, 'borrower')->create([
+        'checked_out_at' => now()->subDay(),
+        'due_at' => now()->subDays(3),
+        'returned_at' => now(),
+    ]);
+
+    $this->actingAs($librarian)
+        ->get(route('loans.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('library/LoansIndex')
+            ->where('loans.data.0.id', $returnedLoan->id)
+            ->where('loans.data.0.due_at', $returnedLoan->due_at?->toDateString())
+            ->where('loans.data.0.returned_at', $returnedLoan->returned_at?->toDateString())
+            ->where('loans.data.0.is_overdue', false)
+            ->where('loans.data.1.id', $overdueLoan->id)
+            ->where('loans.data.1.due_at', $overdueLoan->due_at?->toDateString())
+            ->where('loans.data.1.returned_at', null)
+            ->where('loans.data.1.is_overdue', true));
 });
 
 test('librarians can check books out and back in', function () {

@@ -6,28 +6,29 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Prioridad de Correccion
 
-| Prioridad | Hallazgo | Area |
-| --- | --- | --- |
-| P0 | Contrato de fechas de prestamos invalido en la vista Vue | Frontend / circulacion |
-| P0 | Middleware `verified` inefectivo para usuarios no verificados | Autenticacion |
-| P0 | Cuenta administradora demo con credenciales conocidas | Seguridad / seeders |
-| P1 | Carrera entre actualizacion de inventario y check-out | Dominio / concurrencia |
-| P1 | Registro depende de roles no sembrados y no es atomico | Provisionamiento / autenticacion |
-| P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Datos / cuentas |
-| P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Seguridad de cuenta |
-| P2 | Formularios y mutaciones Vue tienen errores o estados pendientes incompletos | Experiencia / frontend |
-| P3 | Reutilizacion, accesibilidad y formato pendientes | Mantenibilidad |
+| Prioridad | Hallazgo | Estado | Area |
+| --- | --- | --- | --- |
+| P0 | Contrato de fechas de prestamos invalido en la vista Vue | Resuelto | Frontend / circulacion |
+| P0 | Middleware `verified` inefectivo para usuarios no verificados | Pendiente | Autenticacion |
+| P0 | Cuenta administradora demo con credenciales conocidas | Pendiente | Seguridad / seeders |
+| P1 | Carrera entre actualizacion de inventario y check-out | Pendiente | Dominio / concurrencia |
+| P1 | Registro depende de roles no sembrados y no es atomico | Pendiente | Provisionamiento / autenticacion |
+| P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Pendiente | Datos / cuentas |
+| P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Pendiente | Seguridad de cuenta |
+| P2 | Formularios y mutaciones Vue tienen errores o estados pendientes incompletos | Pendiente | Experiencia / frontend |
+| P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
 ## P0 - Corregir Antes de Entrega
 
 ### 1. Fechas de prestamos invalidas en Vue
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [LoansIndex.vue](resources/js/pages/library/LoansIndex.vue), [LoanController.php](app/Http/Controllers/Library/LoanController.php)
 - **Severidad:** Critica
 - **Evidencia:** el backend serializa `due_at` como una fecha ISO completa, por ejemplo `2026-07-22T00:00:00.000000Z`. La vista concatena `T23:59:59` y `T12:00:00`, produciendo una fecha invalida.
 - **Impacto:** la lista de prestamos puede fallar al renderizar o mostrar un estado de vencimiento incorrecto. El calculo de vencimiento tambien difiere del servidor.
-- **Correccion recomendada:** transformar la respuesta de prestamos en el servidor a un contrato explicito: `due_at` en formato `Y-m-d` e `is_overdue` calculado por Laravel. Eliminar el calculo de vencimiento y la concatenacion de fechas del cliente.
-- **Prueba requerida:** un prestamo activo con fecha limite, un prestamo vencido y un prestamo devuelto deben renderizar estados correctos en la interfaz.
+- **Correccion aplicada:** la respuesta de prestamos transforma todas las fechas a `Y-m-d` y entrega `is_overdue` calculado por Laravel. La vista consume ese estado y crea fechas locales sin concatenar sufijos a valores ISO.
+- **Validacion aplicada:** una prueba HTTP cubre un prestamo vencido y uno devuelto, comprobando las fechas normalizadas y ambos estados de vencimiento.
 
 ### 2. La verificacion de correo no protege las rutas `verified`
 
@@ -187,11 +188,10 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Siguiente Orden de Trabajo
 
-1. Normalizar el contrato de prestamos entre Laravel y Vue.
-2. Activar correctamente la verificacion de correo y sus pruebas.
-3. Separar y restringir seeders demo; hacer atomico el registro con rol.
-4. Corregir concurrencia de inventario y eliminacion de perfiles con prestamos.
-5. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
-6. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
-7. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
-8. Dejar `composer lint:check` en verde.
+1. Activar correctamente la verificacion de correo y sus pruebas.
+2. Separar y restringir seeders demo; hacer atomico el registro con rol.
+3. Corregir concurrencia de inventario y eliminacion de perfiles con prestamos.
+4. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
+5. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
+6. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
+7. Dejar `composer lint:check` en verde.
