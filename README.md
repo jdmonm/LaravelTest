@@ -37,6 +37,8 @@ composer run dev
 
 Open `http://localhost:8000` after the development services are running.
 
+`composer setup` also migrates and seeds the application, including the roles and permissions required before a new user can register.
+
 The supplied Dev Container also includes MariaDB. To use it, set these values in `.env` before migrating:
 
 ```dotenv

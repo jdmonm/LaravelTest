@@ -12,7 +12,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P0 | Middleware `verified` inefectivo para usuarios no verificados | Resuelto | Autenticacion |
 | P0 | Cuenta administradora demo con credenciales conocidas | Resuelto | Seguridad / seeders |
 | P1 | Carrera entre actualizacion de inventario y check-out | Resuelto | Dominio / concurrencia |
-| P1 | Registro depende de roles no sembrados y no es atomico | Pendiente | Provisionamiento / autenticacion |
+| P1 | Registro depende de roles no sembrados y no es atomico | Resuelto | Provisionamiento / autenticacion |
 | P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Pendiente | Datos / cuentas |
 | P2 | Cambio de correo y sesiones despues de reset requieren endurecimiento | Pendiente | Seguridad de cuenta |
 | P2 | Formularios y mutaciones Vue tienen errores o estados pendientes incompletos | Pendiente | Experiencia / frontend |
@@ -64,12 +64,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 5. Registro no atomico si los roles aun no existen
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [CreateNewUser.php](app/Actions/Fortify/CreateNewUser.php), [LibraryAuthorizationSeeder.php](database/seeders/LibraryAuthorizationSeeder.php), [composer.json](composer.json)
 - **Severidad:** Media
 - **Evidencia:** el registro crea al usuario y luego asigna el rol `member`. Una instalacion que ejecute migraciones sin sembrar roles puede lanzar `RoleDoesNotExist` despues de crear la cuenta.
 - **Impacto:** el registro falla y deja usuarios parciales sin rol; una instalacion limpia no queda lista para registrar usuarios.
-- **Correccion recomendada:** garantizar el seeding de roles en el provisionamiento y usar una transaccion para crear la cuenta y asignar su rol.
-- **Prueba requerida:** una base recien migrada sin roles no debe dejar una cuenta parcial; el flujo de setup debe dejar los roles disponibles antes del primer registro.
+- **Correccion aplicada:** los scripts de setup y post-creacion ejecutan el seeder seguro de la aplicacion. La creacion de usuario y la asignacion del rol `member` se ejecutan en una sola transaccion.
+- **Validacion aplicada:** una prueba elimina el rol `member`, fuerza el fallo de asignacion y confirma que no queda ninguna cuenta parcial.
 
 ### 6. Eliminar un perfil con prestamos falla y puede dejar roles inconsistentes
 
@@ -191,9 +192,8 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Siguiente Orden de Trabajo
 
-1. Hacer atomico el registro con rol y asegurar el aprovisionamiento inicial.
-2. Corregir eliminacion de perfiles con prestamos.
-3. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
-4. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
-5. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
-6. Dejar `composer lint:check` en verde.
+1. Corregir eliminacion de perfiles con prestamos.
+2. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
+3. Resolver mensajes de error, fechas limite y estados pendientes de Vue.
+4. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
+5. Dejar `composer lint:check` en verde.
