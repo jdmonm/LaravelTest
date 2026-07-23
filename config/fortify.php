@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ThrottleSensitiveAuthenticationRequests;
 use Laravel\Fortify\Features;
 
 return [
@@ -103,7 +104,7 @@ return [
 
     'middleware' => [
         'web',
-        \App\Http\Middleware\ThrottleSensitiveAuthenticationRequests::class,
+        ThrottleSensitiveAuthenticationRequests::class,
     ],
 
     /*

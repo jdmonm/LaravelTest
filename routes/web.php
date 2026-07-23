@@ -42,4 +42,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('access.update');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

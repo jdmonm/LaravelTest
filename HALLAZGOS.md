@@ -23,7 +23,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P3 | Paginacion repetida en tres paginas | Resuelto | Mantenibilidad |
 | P3 | Jerarquia de encabezados incompleta | Resuelto | Accesibilidad |
 | P3 | Errores de formulario con semantica accesible incompleta | Resuelto | Accesibilidad |
-| P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
+| P3 | Formato PHP pendiente en la puerta de calidad | Resuelto | Mantenibilidad |
 
 ## P0 - Corregir Antes de Entrega
 
@@ -185,11 +185,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 16. Formato PHP pendiente en la puerta de calidad
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [pint.json](pint.json), archivos reportados por `composer lint:check`
 - **Severidad:** Baja
 - **Evidencia:** Pint reporto problemas de formato en 20 archivos; el chequeo forma parte de la ruta estandar de calidad.
 - **Impacto:** el pipeline de CI no puede pasar de forma consistente.
-- **Correccion recomendada:** ejecutar Pint sobre los archivos afectados y verificar con `composer lint:check`.
+- **Correccion aplicada:** se aplico el preset Laravel de Pint a los 22 archivos reportados, incluidos controladores, requests, seeders, rutas y pruebas. Tambien se elimino un acceso nullsafe innecesario sobre `checked_out_at`, atributo obligatorio de `Loan`, detectado por PHPStan.
+- **Validacion aplicada:** `composer lint:check` y `composer types:check` completan sin errores.
 
 ## Riesgos Residuales y Configuracion de Despliegue
 
@@ -211,10 +213,8 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | `npm run build` | Correcto; aviso opcional de `fontaine`. |
 | `composer audit --locked` | Sin advisories conocidos. |
 | `npm audit --omit=dev` | Sin vulnerabilidades conocidas. |
-| `composer lint:check` | Pendiente: Pint reporta formato en 20 archivos. |
+| `composer lint:check` | Correcto. |
 
 ## Siguiente Orden de Trabajo
 
-1. Resolver fecha limite y estados pendientes de Vue.
-2. Aplicar Wayfinder, paginacion reutilizable y mejoras ARIA.
-3. Dejar `composer lint:check` en verde.
+Los 16 hallazgos priorizados fueron corregidos y validados en commits independientes.

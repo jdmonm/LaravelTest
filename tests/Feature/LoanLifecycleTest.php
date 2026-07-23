@@ -32,7 +32,7 @@ test('checking out and checking in a book keeps inventory in sync', function () 
 test('a book without available copies cannot be checked out', function () {
     $book = Book::factory()->create(['available_copies' => 0]);
 
-    expect(fn() => app(CheckOutBook::class)->handle($book, User::factory()->create()))
+    expect(fn () => app(CheckOutBook::class)->handle($book, User::factory()->create()))
         ->toThrow(ValidationException::class);
 });
 

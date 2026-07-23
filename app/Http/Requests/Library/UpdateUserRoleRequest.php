@@ -17,7 +17,7 @@ class UpdateUserRoleRequest extends FormRequest
     {
         return [
             'role' => ['required', 'string', Rule::in(array_map(
-                static fn(LibraryRole $role): string => $role->value,
+                static fn (LibraryRole $role): string => $role->value,
                 LibraryRole::cases(),
             ))],
         ];

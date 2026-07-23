@@ -33,7 +33,7 @@ test('the dashboard receives the authenticated user authorization context', func
 
     $this->actingAs($user)
         ->get(route('dashboard'))
-        ->assertInertia(fn(Assert $page) => $page
+        ->assertInertia(fn (Assert $page) => $page
             ->component('Dashboard')
             ->has('auth.roles', 1)
             ->where('auth.roles.0', LibraryRole::Librarian->value)

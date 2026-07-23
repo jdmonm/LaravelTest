@@ -46,7 +46,7 @@ class LibraryAuthorizationSeeder extends Seeder
             $role = Role::findOrCreate($roleName);
 
             $role->syncPermissions(array_map(
-                static fn(LibraryPermission $permission): string => $permission->value,
+                static fn (LibraryPermission $permission): string => $permission->value,
                 $permissions,
             ));
         }

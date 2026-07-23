@@ -38,7 +38,7 @@ class DashboardController extends Controller
                 ->latest('checked_out_at')
                 ->limit(5)
                 ->get()
-                ->map(static fn(Loan $loan): array => [
+                ->map(static fn (Loan $loan): array => [
                     'id' => $loan->id,
                     'book' => [
                         'id' => $loan->book->id,

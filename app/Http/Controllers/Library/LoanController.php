@@ -79,7 +79,7 @@ class LoanController extends Controller
                     'name' => $loan->borrower->name,
                     'email' => $loan->borrower->email,
                 ],
-                'checked_out_at' => $loan->checked_out_at?->toDateString(),
+                'checked_out_at' => $loan->checked_out_at->toDateString(),
                 'due_at' => $loan->due_at?->toDateString(),
                 'returned_at' => $loan->returned_at?->toDateString(),
                 'is_overdue' => $loan->isOverdue(),

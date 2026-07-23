@@ -18,7 +18,7 @@ class StoreBookRequest extends FormRequest
             'author' => ['required', 'string', 'max:255'],
             'isbn' => ['nullable', 'string', 'max:32', 'unique:books,isbn'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'published_year' => ['nullable', 'integer', 'min:1000', 'max:' . now()->year],
+            'published_year' => ['nullable', 'integer', 'min:1000', 'max:'.now()->year],
             'total_copies' => ['required', 'integer', 'min:1', 'max:10000'],
         ];
     }

@@ -34,7 +34,7 @@ class AccessController extends Controller
                 })
                 ->orderBy('name')
                 ->paginate(20)
-                ->through(static fn(User $user): array => [
+                ->through(static fn (User $user): array => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
@@ -45,7 +45,7 @@ class AccessController extends Controller
                 'search' => $search,
             ],
             'roles' => array_map(
-                static fn(LibraryRole $role): string => $role->value,
+                static fn (LibraryRole $role): string => $role->value,
                 LibraryRole::cases(),
             ),
         ]);
