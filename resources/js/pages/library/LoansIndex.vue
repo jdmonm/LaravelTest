@@ -391,7 +391,16 @@ function formatDate(value: string | null): string {
                 <div class="grid gap-2">
                     <Label for="book">Book</Label>
                     <Select v-model="checkoutForm.book_id">
-                        <SelectTrigger id="book" class="w-full">
+                        <SelectTrigger
+                            id="book"
+                            class="w-full"
+                            :aria-describedby="
+                                checkoutForm.errors.book_id
+                                    ? 'book-error'
+                                    : undefined
+                            "
+                            :aria-invalid="Boolean(checkoutForm.errors.book_id)"
+                        >
                             <SelectValue
                                 placeholder="Choose an available book"
                             />
@@ -407,13 +416,27 @@ function formatDate(value: string | null): string {
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                    <InputError :message="checkoutForm.errors.book_id" />
+                    <InputError
+                        id="book-error"
+                        :message="checkoutForm.errors.book_id"
+                    />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="borrower">Member</Label>
                     <Select v-model="checkoutForm.borrower_id">
-                        <SelectTrigger id="borrower" class="w-full">
+                        <SelectTrigger
+                            id="borrower"
+                            class="w-full"
+                            :aria-describedby="
+                                checkoutForm.errors.borrower_id
+                                    ? 'borrower-error'
+                                    : undefined
+                            "
+                            :aria-invalid="
+                                Boolean(checkoutForm.errors.borrower_id)
+                            "
+                        >
                             <SelectValue placeholder="Choose a member" />
                         </SelectTrigger>
                         <SelectContent>
@@ -426,7 +449,10 @@ function formatDate(value: string | null): string {
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                    <InputError :message="checkoutForm.errors.borrower_id" />
+                    <InputError
+                        id="borrower-error"
+                        :message="checkoutForm.errors.borrower_id"
+                    />
                 </div>
 
                 <div class="grid gap-2">
@@ -436,8 +462,17 @@ function formatDate(value: string | null): string {
                         v-model="checkoutForm.due_at"
                         type="date"
                         :min="minDueDate"
+                        :aria-describedby="
+                            checkoutForm.errors.due_at
+                                ? 'due-at-error'
+                                : undefined
+                        "
+                        :aria-invalid="Boolean(checkoutForm.errors.due_at)"
                     />
-                    <InputError :message="checkoutForm.errors.due_at" />
+                    <InputError
+                        id="due-at-error"
+                        :message="checkoutForm.errors.due_at"
+                    />
                 </div>
 
                 <DialogFooter>

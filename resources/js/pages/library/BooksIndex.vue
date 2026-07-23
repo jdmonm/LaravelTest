@@ -333,8 +333,12 @@ function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
                         v-model="form.title"
                         autocomplete="off"
                         required
+                        :aria-describedby="
+                            form.errors.title ? 'title-error' : undefined
+                        "
+                        :aria-invalid="Boolean(form.errors.title)"
                     />
-                    <InputError :message="form.errors.title" />
+                    <InputError id="title-error" :message="form.errors.title" />
                 </div>
 
                 <div class="grid gap-2 sm:grid-cols-2">
@@ -345,8 +349,15 @@ function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
                             v-model="form.author"
                             autocomplete="off"
                             required
+                            :aria-describedby="
+                                form.errors.author ? 'author-error' : undefined
+                            "
+                            :aria-invalid="Boolean(form.errors.author)"
                         />
-                        <InputError :message="form.errors.author" />
+                        <InputError
+                            id="author-error"
+                            :message="form.errors.author"
+                        />
                     </div>
                     <div class="grid gap-2">
                         <Label for="isbn">ISBN</Label>
@@ -354,8 +365,15 @@ function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
                             id="isbn"
                             v-model="form.isbn"
                             autocomplete="off"
+                            :aria-describedby="
+                                form.errors.isbn ? 'isbn-error' : undefined
+                            "
+                            :aria-invalid="Boolean(form.errors.isbn)"
                         />
-                        <InputError :message="form.errors.isbn" />
+                        <InputError
+                            id="isbn-error"
+                            :message="form.errors.isbn"
+                        />
                     </div>
                 </div>
 
@@ -368,8 +386,17 @@ function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
                             type="number"
                             min="1000"
                             :max="new Date().getFullYear()"
+                            :aria-describedby="
+                                form.errors.published_year
+                                    ? 'published-year-error'
+                                    : undefined
+                            "
+                            :aria-invalid="Boolean(form.errors.published_year)"
                         />
-                        <InputError :message="form.errors.published_year" />
+                        <InputError
+                            id="published-year-error"
+                            :message="form.errors.published_year"
+                        />
                     </div>
                     <div class="grid gap-2">
                         <Label for="total-copies">Total copies</Label>
@@ -379,8 +406,17 @@ function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
                             type="number"
                             min="1"
                             required
+                            :aria-describedby="
+                                form.errors.total_copies
+                                    ? 'total-copies-error'
+                                    : undefined
+                            "
+                            :aria-invalid="Boolean(form.errors.total_copies)"
                         />
-                        <InputError :message="form.errors.total_copies" />
+                        <InputError
+                            id="total-copies-error"
+                            :message="form.errors.total_copies"
+                        />
                     </div>
                 </div>
 
@@ -391,8 +427,17 @@ function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
                         v-model="form.description"
                         rows="4"
                         class="min-h-24 w-full resize-y rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        :aria-describedby="
+                            form.errors.description
+                                ? 'description-error'
+                                : undefined
+                        "
+                        :aria-invalid="Boolean(form.errors.description)"
                     />
-                    <InputError :message="form.errors.description" />
+                    <InputError
+                        id="description-error"
+                        :message="form.errors.description"
+                    />
                 </div>
 
                 <DialogFooter>

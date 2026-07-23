@@ -22,6 +22,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P3 | Rutas literales en paginas Vue en lugar de Wayfinder | Resuelto | Mantenibilidad |
 | P3 | Paginacion repetida en tres paginas | Resuelto | Mantenibilidad |
 | P3 | Jerarquia de encabezados incompleta | Resuelto | Accesibilidad |
+| P3 | Errores de formulario con semantica accesible incompleta | Resuelto | Accesibilidad |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
 ## P0 - Corregir Antes de Entrega
@@ -174,11 +175,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 15. Errores de formulario con semantica accesible incompleta
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [InputError.vue](resources/js/components/InputError.vue), formularios de libros y prestamos
 - **Severidad:** Baja
 - **Evidencia:** los mensajes no tienen `id`, `aria-live` ni `role="alert"`, y los controles no usan `aria-describedby` o `aria-invalid` para asociarlos.
 - **Impacto:** los errores pueden no anunciarse correctamente a tecnologias asistivas.
-- **Correccion recomendada:** mejorar `InputError` y enlazarlo con `Input` y `SelectTrigger` mediante atributos ARIA.
+- **Correccion aplicada:** `InputError` acepta un identificador y anuncia mensajes con `role="alert"` y `aria-live`. Los controles de catalogo y checkout exponen `aria-invalid` y se enlazan a su mensaje concreto mediante `aria-describedby` cuando hay un error.
+- **Validacion aplicada:** las comprobaciones de tipos, lint y build validan los atributos en `Input`, `textarea` y `SelectTrigger`.
 
 ### 16. Formato PHP pendiente en la puerta de calidad
 
