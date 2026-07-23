@@ -10,7 +10,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | --- | --- | --- | --- |
 | P0 | Contrato de fechas de prestamos invalido en la vista Vue | Resuelto | Frontend / circulacion |
 | P0 | Middleware `verified` inefectivo para usuarios no verificados | Resuelto | Autenticacion |
-| P0 | Cuenta administradora demo con credenciales conocidas | Pendiente | Seguridad / seeders |
+| P0 | Cuenta administradora demo con credenciales conocidas | Resuelto | Seguridad / seeders |
 | P1 | Carrera entre actualizacion de inventario y check-out | Pendiente | Dominio / concurrencia |
 | P1 | Registro depende de roles no sembrados y no es atomico | Pendiente | Provisionamiento / autenticacion |
 | P1 | Eliminacion de perfil falla con prestamos y puede alterar roles | Pendiente | Datos / cuentas |
@@ -42,12 +42,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 3. Seeder demo puede exponer o elevar una cuenta administradora
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [DatabaseSeeder.php](database/seeders/DatabaseSeeder.php), [README.md](README.md)
 - **Severidad:** Alta
 - **Evidencia:** el seeder crea o reutiliza `admin@library.test`, le asigna el rol `admin` y usa una contrasena conocida (`password`). Si el email existe antes de ejecutar el seeder, `syncRoles(admin)` puede elevar esa cuenta.
 - **Impacto:** ejecutar seeders en un entorno accesible puede dejar una cuenta administrativa predecible.
-- **Correccion recomendada:** separar los datos demo a un seeder explicitamente local/testing, bloquear su ejecucion fuera de esos entornos y no asignar privilegios a una cuenta localizada por un identificador publico.
-- **Prueba requerida:** el seeder demo debe fallar o no crear cuentas en produccion; una cuenta preexistente con ese email nunca debe elevarse automaticamente.
+- **Correccion aplicada:** `LibraryDemoSeeder` contiene las cuentas y el catalogo de demostracion, y no realiza escrituras fuera de `local` o `testing`. `DatabaseSeeder` siempre conserva el seeding de roles y permisos.
+- **Validacion aplicada:** una prueba ejecuta el seeder bajo `production` y confirma que no crea datos demo ni eleva una cuenta preexistente con el email de administrador demo.
 
 ## P1 - Corregir en el Siguiente Corte
 
@@ -189,7 +190,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ## Siguiente Orden de Trabajo
 
-1. Separar y restringir seeders demo; hacer atomico el registro con rol.
+1. Hacer atomico el registro con rol y asegurar el aprovisionamiento inicial.
 2. Corregir concurrencia de inventario y eliminacion de perfiles con prestamos.
 3. Endurecer cambios sensibles de cuenta, sesiones y rate limits.
 4. Resolver mensajes de error, fechas limite y estados pendientes de Vue.

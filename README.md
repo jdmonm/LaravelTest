@@ -50,7 +50,7 @@ DB_PASSWORD=mariadb
 
 ## Demo accounts
 
-After `php artisan migrate --seed`, each account uses the password `password`:
+In `local` and `testing` environments, `php artisan migrate --seed` creates the following accounts. Each uses the password `password`:
 
 | Role | Email |
 | --- | --- |
@@ -58,7 +58,7 @@ After `php artisan migrate --seed`, each account uses the password `password`:
 | Librarian | `librarian@library.test` |
 | Member | `member@library.test` |
 
-These are local development credentials only. Change them before deploying anywhere public.
+`LibraryDemoSeeder` does not create these accounts or the sample catalogue outside `local` and `testing`. Production seeding creates only the roles and permissions required by the application; provision production accounts separately.
 
 ## Validation
 

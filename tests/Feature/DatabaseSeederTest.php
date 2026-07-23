@@ -20,3 +20,21 @@ test('the database seeder creates demo accounts and a catalogue', function () {
 
     $this->assertDatabaseCount('books', 4);
 });
+
+test('the database seeder skips demo data outside local and testing', function () {
+    $existingUser = User::factory()->create(['email' => 'admin@library.test']);
+    $environment = app()->environment();
+
+    app()->instance('env', 'production');
+
+    try {
+        app(DatabaseSeeder::class)->setContainer(app())->run();
+    } finally {
+        app()->instance('env', $environment);
+    }
+
+    expect($existingUser->fresh()->getRoleNames())->toBeEmpty();
+
+    $this->assertDatabaseCount('users', 1);
+    $this->assertDatabaseCount('books', 0);
+});
