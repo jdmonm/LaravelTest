@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\ThrottleSensitiveAuthenticationRequests;
 use Laravel\Fortify\Features;
 
 return [
@@ -101,7 +102,10 @@ return [
     |
     */
 
-    'middleware' => ['web'],
+    'middleware' => [
+        'web',
+        ThrottleSensitiveAuthenticationRequests::class,
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -163,7 +167,6 @@ return [
     'features' => [
         Features::registration(),
         Features::resetPasswords(),
-        Features::emailVerification(),
         Features::twoFactorAuthentication([
             'confirm' => true,
             'confirmPassword' => true,

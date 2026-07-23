@@ -1,8 +1,12 @@
 <?php
 
+use App\Enums\LibraryRole;
+use App\Models\Loan;
 use App\Models\User;
+use Database\Seeders\LibraryAuthorizationSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -14,7 +18,7 @@ test('profile page is displayed', function () {
     $response->assertOk();
 });
 
-test('profile information can be updated', function () {
+test('profile information can be updated without changing the legacy verification timestamp', function () {
     $user = User::factory()->create();
 
     $response = $this
@@ -22,6 +26,7 @@ test('profile information can be updated', function () {
         ->patch(route('profile.update'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'current_password' => 'password',
         ]);
 
     $response
@@ -32,7 +37,7 @@ test('profile information can be updated', function () {
 
     expect($user->name)->toBe('Test User');
     expect($user->email)->toBe('test@example.com');
-    expect($user->email_verified_at)->toBeNull();
+    expect($user->email_verified_at)->not->toBeNull();
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {
@@ -50,6 +55,24 @@ test('email verification status is unchanged when the email address is unchanged
         ->assertRedirect(route('profile.edit'));
 
     expect($user->refresh()->email_verified_at)->not->toBeNull();
+});
+
+test('current password must be provided to change the email address', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->from(route('profile.edit'))
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => 'changed@example.com',
+        ]);
+
+    $response
+        ->assertSessionHasErrors('current_password')
+        ->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->email)->not->toBe('changed@example.com');
 });
 
 test('user can delete their account', function () {
@@ -84,4 +107,27 @@ test('correct password must be provided to delete account', function () {
         ->assertRedirect(route('profile.edit'));
 
     expect($user->fresh())->not->toBeNull();
+});
+
+test('users with loan history cannot delete their account or lose their roles', function () {
+    $this->seed(LibraryAuthorizationSeeder::class);
+
+    $user = User::factory()->create();
+    $user->assignRole(LibraryRole::Member);
+    Loan::factory()->for($user, 'borrower')->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->from(route('profile.edit'))
+        ->delete(route('profile.destroy'), [
+            'password' => 'password',
+        ]);
+
+    $response
+        ->assertSessionHasErrors('account')
+        ->assertRedirect(route('profile.edit'));
+
+    $this->assertAuthenticated();
+    expect($user->fresh())->not->toBeNull()
+        ->and($user->fresh()->hasRole(LibraryRole::Member))->toBeTrue();
 });

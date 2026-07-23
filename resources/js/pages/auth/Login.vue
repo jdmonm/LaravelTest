@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
+import { redirect as googleRedirect } from '@/routes/auth/google';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
@@ -23,6 +24,7 @@ defineOptions({
 defineProps<{
     status?: string;
     canResetPassword: boolean;
+    canSignInWithGoogle: boolean;
 }>();
 </script>
 
@@ -37,6 +39,15 @@ defineProps<{
     </div>
 
     <PasskeyVerify />
+
+    <Button
+        v-if="canSignInWithGoogle"
+        variant="outline"
+        class="w-full"
+        as-child
+    >
+        <a :href="googleRedirect.url()">Continue with Google</a>
+    </Button>
 
     <Form
         v-bind="store.form()"

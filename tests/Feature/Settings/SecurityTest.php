@@ -1,11 +1,12 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 
-uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(RefreshDatabase::class);
 
 test('security page is displayed', function () {
     $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
@@ -23,12 +24,13 @@ test('security page is displayed', function () {
     $this->actingAs($user)
         ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('security.edit'))
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/Security')
-            ->where('canManagePasskeys', true)
-            ->where('passkeys', [])
-            ->where('canManageTwoFactor', true)
-            ->where('twoFactorEnabled', false),
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->component('settings/Security')
+                ->where('canManagePasskeys', true)
+                ->where('passkeys', [])
+                ->where('canManageTwoFactor', true)
+                ->where('twoFactorEnabled', false),
         );
 });
 
@@ -59,13 +61,14 @@ test('security page renders without two factor when feature is disabled', functi
         ->withSession(['auth.password_confirmed_at' => time()])
         ->get(route('security.edit'))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('settings/Security')
-            ->where('canManagePasskeys', false)
-            ->where('passkeys', [])
-            ->where('canManageTwoFactor', false)
-            ->missing('twoFactorEnabled')
-            ->missing('requiresConfirmation'),
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->component('settings/Security')
+                ->where('canManagePasskeys', false)
+                ->where('passkeys', [])
+                ->where('canManageTwoFactor', false)
+                ->missing('twoFactorEnabled')
+                ->missing('requiresConfirmation'),
         );
 });
 
@@ -103,4 +106,24 @@ test('correct password must be provided to update password', function () {
     $response
         ->assertSessionHasErrors('current_password')
         ->assertRedirect(route('security.edit'));
+});
+
+test('password updates invalidate sessions with an outdated password hash', function () {
+    $user = User::factory()->create();
+    $oldPasswordHash = $user->password;
+
+    $this->actingAs($user)
+        ->put(route('user-password.update'), [
+            'current_password' => 'password',
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ])
+        ->assertRedirect();
+
+    $this->actingAs($user->refresh())
+        ->withSession(['password_hash_web' => $oldPasswordHash])
+        ->get(route('dashboard'))
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
 });

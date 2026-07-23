@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { Form, Head, usePage } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import PasswordInput from '@/components/PasswordInput.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/profile';
-import { send } from '@/routes/verification';
 
 defineOptions({
     layout: {
@@ -25,6 +24,7 @@ defineOptions({
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const email = ref(user.value.email);
 </script>
 
 <template>
@@ -65,7 +65,7 @@ const user = computed(() => page.props.auth.user);
                     type="email"
                     class="mt-1 block w-full"
                     name="email"
-                    :default-value="user.email"
+                    v-model="email"
                     required
                     autocomplete="username"
                     placeholder="Email address"
@@ -73,24 +73,14 @@ const user = computed(() => page.props.auth.user);
                 <InputError class="mt-2" :message="errors.email" />
             </div>
 
-            <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
-                <p class="-mt-4 text-sm text-muted-foreground">
-                    Your email address is unverified.
-                    <Link
-                        :href="send()"
-                        as="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                    >
-                        Click here to re-send the verification email.
-                    </Link>
-                </p>
-
-                <div
-                    v-if="page.props.status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600"
-                >
-                    A new verification link has been sent to your email address.
-                </div>
+            <div v-if="email !== user.email" class="grid gap-2">
+                <Label for="current-password">Current password</Label>
+                <PasswordInput
+                    id="current-password"
+                    name="current_password"
+                    autocomplete="current-password"
+                />
+                <InputError class="mt-2" :message="errors.current_password" />
             </div>
 
             <div class="flex items-center gap-4">

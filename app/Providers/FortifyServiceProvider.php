@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Responses\GenericPasswordResetLinkResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -11,6 +12,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
@@ -21,7 +23,10 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(
+            FailedPasswordResetLinkRequestResponse::class,
+            GenericPasswordResetLinkResponse::class,
+        );
     }
 
     /**
@@ -50,6 +55,7 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/Login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
+            'canSignInWithGoogle' => $this->googleSignInIsConfigured(),
             'status' => $request->session()->get('status'),
         ]));
 
@@ -60,10 +66,6 @@ class FortifyServiceProvider extends ServiceProvider
         ]));
 
         Fortify::requestPasswordResetLinkView(fn (Request $request) => Inertia::render('auth/ForgotPassword', [
-            'status' => $request->session()->get('status'),
-        ]));
-
-        Fortify::verifyEmailView(fn (Request $request) => Inertia::render('auth/VerifyEmail', [
             'status' => $request->session()->get('status'),
         ]));
 
@@ -81,6 +83,25 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureRateLimiting(): void
     {
+        RateLimiter::for('password-reset', function (Request $request) {
+            $email = Str::lower((string) $request->input(Fortify::email()));
+
+            return [
+                Limit::perMinute(3)->by("password-reset:email:{$email}|{$request->ip()}"),
+                Limit::perMinute(10)->by("password-reset:ip:{$request->ip()}"),
+            ];
+        });
+
+        RateLimiter::for('registration', function (Request $request) {
+            return Limit::perMinute(5)->by("registration:{$request->ip()}");
+        });
+
+        RateLimiter::for('password-confirmation', function (Request $request) {
+            return Limit::perMinute(5)->by(
+                "password-confirmation:{$request->user()?->getAuthIdentifier()}|{$request->ip()}",
+            );
+        });
+
         RateLimiter::for('two-factor', function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
@@ -96,5 +117,12 @@ class FortifyServiceProvider extends ServiceProvider
                 ($request->input('credential.id') ?: $request->session()->getId()).'|'.$request->ip(),
             );
         });
+    }
+
+    private function googleSignInIsConfigured(): bool
+    {
+        return filled(config('services.google.client_id'))
+            && filled(config('services.google.client_secret'))
+            && filled(config('services.google.redirect'));
     }
 }
