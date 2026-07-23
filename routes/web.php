@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Library\AccessController;
+use App\Http\Controllers\Library\AssistantController;
 use App\Http\Controllers\Library\BookController;
 use App\Http\Controllers\Library\LoanController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,14 @@ Route::redirect('/', '/dashboard')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('assistant', [AssistantController::class, 'index'])->name('assistant.index');
+    Route::post('assistant/messages', [AssistantController::class, 'store'])
+        ->middleware('throttle:library-assistant')
+        ->name('assistant.store');
+    Route::post('assistant/checkouts', [AssistantController::class, 'confirmCheckout'])
+        ->middleware(['permission:loans.manage', 'throttle:library-assistant-confirmation'])
+        ->name('assistant.checkouts.store');
 
     Route::get('books', [BookController::class, 'index'])
         ->middleware('permission:books.view')
