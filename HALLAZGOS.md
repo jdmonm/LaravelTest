@@ -19,6 +19,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P2 | Error de disponibilidad de libro no se muestra en checkout | Resuelto | Experiencia / frontend |
 | P2 | Fecha limite seleccionable contradice la regla del servidor | Resuelto | Experiencia / frontend |
 | P2 | Mutaciones Vue no muestran estados pendientes ni errores contextuales | Resuelto | Experiencia / frontend |
+| P3 | Rutas literales en paginas Vue en lugar de Wayfinder | Resuelto | Mantenibilidad |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
 ## P0 - Corregir Antes de Entrega
@@ -141,11 +142,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 12. Rutas literales en paginas Vue en lugar de Wayfinder
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [BooksIndex.vue](resources/js/pages/library/BooksIndex.vue), [LoansIndex.vue](resources/js/pages/library/LoansIndex.vue), [AccessIndex.vue](resources/js/pages/library/AccessIndex.vue)
 - **Severidad:** Media
 - **Evidencia:** las paginas construyen URLs como `'/books'`, `'/loans'` y `'/access'`, aunque existen helpers Wayfinder generados.
 - **Impacto:** cambios de rutas o parametros pueden desalinear frontend y backend sin proteccion de TypeScript.
-- **Correccion recomendada:** usar los helpers generados y regenerar con `php artisan wayfinder:generate --with-form` cuando cambien rutas. No editar los archivos generados manualmente.
+- **Correccion aplicada:** catalogo, prestamos y acceso consumen los helpers generados para breadcrumbs, busquedas y mutaciones. Los archivos generados permanecen sin cambios.
+- **Validacion aplicada:** la comprobacion de tipos asegura que las firmas de rutas y parametros de los helpers coinciden con sus usos.
 
 ### 13. Paginacion repetida en tres paginas
 

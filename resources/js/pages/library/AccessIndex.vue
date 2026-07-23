@@ -17,6 +17,7 @@ import {
 import Spinner from '@/components/ui/spinner/Spinner.vue';
 import { usePendingMutation } from '@/composables/usePendingMutation';
 import { dashboard } from '@/routes';
+import { index as accessIndex, update as updateAccess } from '@/routes/access';
 
 type Member = {
     id: number;
@@ -53,7 +54,7 @@ defineOptions({
             },
             {
                 title: 'Access',
-                href: '/access',
+                href: accessIndex(),
             },
         ],
     },
@@ -65,7 +66,7 @@ const roleMutation = usePendingMutation();
 
 function submitSearch(): void {
     router.get(
-        '/access',
+        accessIndex.url(),
         { search: search.value || undefined },
         {
             preserveScroll: true,
@@ -85,7 +86,7 @@ function updateRole(member: Member, role: AcceptableValue): void {
     }
 
     router.patch(
-        `/access/${member.id}/role`,
+        updateAccess.url(member),
         { role: String(role) },
         {
             preserveScroll: true,

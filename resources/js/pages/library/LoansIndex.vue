@@ -27,6 +27,11 @@ import {
 import Spinner from '@/components/ui/spinner/Spinner.vue';
 import { usePendingMutation } from '@/composables/usePendingMutation';
 import { dashboard } from '@/routes';
+import {
+    checkIn as checkInLoan,
+    index as loansIndex,
+    store as storeLoan,
+} from '@/routes/loans';
 
 type BookOption = {
     id: number;
@@ -83,7 +88,7 @@ defineOptions({
             },
             {
                 title: 'Loans',
-                href: '/loans',
+                href: loansIndex(),
             },
         ],
     },
@@ -112,7 +117,7 @@ const visibleStatusLabel = computed(() => {
 
 function updateFilters(status = selectedStatus.value): void {
     router.get(
-        '/loans',
+        loansIndex.url(),
         {
             search: search.value || undefined,
             status: status === 'all' ? undefined : status,
@@ -141,7 +146,7 @@ function openCheckoutDialog(): void {
 }
 
 function submitCheckout(): void {
-    checkoutForm.post('/loans', {
+    checkoutForm.post(storeLoan.url(), {
         preserveScroll: true,
         onSuccess: () => {
             isCheckoutDialogOpen.value = false;
@@ -155,7 +160,7 @@ function checkIn(loan: Loan): void {
     }
 
     router.patch(
-        `/loans/${loan.id}/check-in`,
+        checkInLoan.url(loan),
         {},
         {
             preserveScroll: true,

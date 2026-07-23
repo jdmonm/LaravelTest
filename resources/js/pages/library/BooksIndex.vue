@@ -17,6 +17,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
+import {
+    destroy as destroyBook,
+    index as booksIndex,
+    store as storeBook,
+    update as updateBook,
+} from '@/routes/books';
 
 type Book = {
     id: number;
@@ -57,7 +63,7 @@ defineOptions({
             },
             {
                 title: 'Catalogue',
-                href: '/books',
+                href: booksIndex(),
             },
         ],
     },
@@ -88,7 +94,7 @@ const form = useForm({
 
 function submitSearch(): void {
     router.get(
-        '/books',
+        booksIndex.url(),
         { search: search.value || undefined },
         {
             preserveScroll: true,
@@ -120,7 +126,7 @@ function openEditDialog(book: Book): void {
 
 function submitBook(): void {
     if (editingBook.value) {
-        form.patch(`/books/${editingBook.value.id}`, {
+        form.patch(updateBook.url(editingBook.value), {
             preserveScroll: true,
             onSuccess: () => {
                 isDialogOpen.value = false;
@@ -130,7 +136,7 @@ function submitBook(): void {
         return;
     }
 
-    form.post('/books', {
+    form.post(storeBook.url(), {
         preserveScroll: true,
         onSuccess: () => {
             isDialogOpen.value = false;
@@ -143,7 +149,7 @@ function deleteBook(book: Book): void {
         return;
     }
 
-    router.delete(`/books/${book.id}`, { preserveScroll: true });
+    router.delete(destroyBook.url(book), { preserveScroll: true });
 }
 
 function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
