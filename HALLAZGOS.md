@@ -21,6 +21,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P2 | Mutaciones Vue no muestran estados pendientes ni errores contextuales | Resuelto | Experiencia / frontend |
 | P3 | Rutas literales en paginas Vue en lugar de Wayfinder | Resuelto | Mantenibilidad |
 | P3 | Paginacion repetida en tres paginas | Resuelto | Mantenibilidad |
+| P3 | Jerarquia de encabezados incompleta | Resuelto | Accesibilidad |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
 ## P0 - Corregir Antes de Entrega
@@ -163,11 +164,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 14. Jerarquia de encabezados incompleta
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [Heading.vue](resources/js/components/Heading.vue)
 - **Severidad:** Baja
 - **Evidencia:** el componente siempre renderiza `h2`, incluso cuando representa el encabezado principal de dashboard, catalogo, prestamos o acceso.
 - **Impacto:** los lectores de pantalla no encuentran un encabezado `h1` principal en las vistas operativas.
-- **Correccion recomendada:** agregar una prop `as` con `h1` o `h2`, conservando `h2` como predeterminado, y usar `h1` en las cabeceras de pagina.
+- **Correccion aplicada:** `Heading` admite la prop `as` y conserva `h2` por defecto para secciones internas. Dashboard, catalogo, prestamos y acceso usan explicitamente `h1` en sus encabezados principales.
+- **Validacion aplicada:** la comprobacion de tipos valida los valores permitidos para la prop y sus usos en las paginas operativas.
 
 ### 15. Errores de formulario con semantica accesible incompleta
 

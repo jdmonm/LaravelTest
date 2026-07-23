@@ -169,6 +169,7 @@ function inventoryVariant(book: Book): 'default' | 'secondary' | 'destructive' {
             class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         >
             <Heading
+                as="h1"
                 title="Catalogue"
                 description="Search the library collection and manage inventory."
             />

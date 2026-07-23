@@ -105,6 +105,7 @@ function roleLabel(role: string): string {
             class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         >
             <Heading
+                as="h1"
                 title="Access control"
                 description="Assign the library role that determines each member's capabilities."
             />

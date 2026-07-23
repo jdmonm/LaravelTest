@@ -205,6 +205,7 @@ function formatDate(value: string | null): string {
             class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         >
             <Heading
+                as="h1"
                 title="Loans"
                 :description="
                     canManageLoans
