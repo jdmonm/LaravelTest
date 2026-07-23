@@ -14,6 +14,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner/Spinner.vue';
+import { usePendingMutation } from '@/composables/usePendingMutation';
 import { dashboard } from '@/routes';
 
 type Member = {
@@ -59,6 +61,7 @@ defineOptions({
 
 const page = usePage();
 const search = ref(props.filters.search);
+const roleMutation = usePendingMutation();
 
 function submitSearch(): void {
     router.get(
@@ -73,14 +76,22 @@ function submitSearch(): void {
 }
 
 function updateRole(member: Member, role: AcceptableValue): void {
-    if (role === null) {
+    if (role === null || String(role) === member.roles[0]) {
+        return;
+    }
+
+    if (!roleMutation.start(member.id)) {
         return;
     }
 
     router.patch(
         `/access/${member.id}/role`,
         { role: String(role) },
-        { preserveScroll: true },
+        {
+            preserveScroll: true,
+            onError: (errors) => roleMutation.setError(member.id, errors),
+            onFinish: () => roleMutation.finish(member.id),
+        },
     );
 }
 
@@ -190,30 +201,54 @@ function paginationLabel(label: string): string {
                                 </div>
                             </td>
                             <td class="px-4 py-4">
-                                <Select
-                                    :model-value="member.roles[0] ?? ''"
-                                    :disabled="
-                                        member.id === page.props.auth.user.id
-                                    "
-                                    @update:model-value="
-                                        (role) => updateRole(member, role)
-                                    "
-                                >
-                                    <SelectTrigger class="w-full">
-                                        <SelectValue
-                                            placeholder="Choose a role"
-                                        />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem
-                                            v-for="role in roles"
-                                            :key="role"
-                                            :value="role"
+                                <div class="grid gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <Select
+                                            :model-value="member.roles[0] ?? ''"
+                                            :disabled="
+                                                member.id ===
+                                                    page.props.auth.user.id ||
+                                                roleMutation.isPending(
+                                                    member.id,
+                                                )
+                                            "
+                                            @update:model-value="
+                                                (role) =>
+                                                    updateRole(member, role)
+                                            "
                                         >
-                                            {{ roleLabel(role) }}
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                            <SelectTrigger class="w-full">
+                                                <SelectValue
+                                                    placeholder="Choose a role"
+                                                />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem
+                                                    v-for="role in roles"
+                                                    :key="role"
+                                                    :value="role"
+                                                >
+                                                    {{ roleLabel(role) }}
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Spinner
+                                            v-if="
+                                                roleMutation.isPending(
+                                                    member.id,
+                                                )
+                                            "
+                                            class="shrink-0"
+                                        />
+                                    </div>
+                                    <p
+                                        v-if="roleMutation.errorFor(member.id)"
+                                        class="text-xs text-destructive"
+                                        role="alert"
+                                    >
+                                        {{ roleMutation.errorFor(member.id) }}
+                                    </p>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

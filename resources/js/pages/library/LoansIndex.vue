@@ -24,6 +24,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import Spinner from '@/components/ui/spinner/Spinner.vue';
+import { usePendingMutation } from '@/composables/usePendingMutation';
 import { dashboard } from '@/routes';
 
 type BookOption = {
@@ -90,6 +92,7 @@ defineOptions({
 const search = ref(props.filters.search);
 const selectedStatus = ref(props.filters.status || 'all');
 const isCheckoutDialogOpen = ref(false);
+const checkInMutation = usePendingMutation();
 const checkoutForm = useForm({
     book_id: '',
     borrower_id: '',
@@ -147,7 +150,19 @@ function submitCheckout(): void {
 }
 
 function checkIn(loan: Loan): void {
-    router.patch(`/loans/${loan.id}/check-in`, {}, { preserveScroll: true });
+    if (!checkInMutation.start(loan.id)) {
+        return;
+    }
+
+    router.patch(
+        `/loans/${loan.id}/check-in`,
+        {},
+        {
+            preserveScroll: true,
+            onError: (errors) => checkInMutation.setError(loan.id, errors),
+            onFinish: () => checkInMutation.finish(loan.id),
+        },
+    );
 }
 
 function loanStatus(loan: Loan): string {
@@ -282,7 +297,7 @@ function paginationLabel(label: string): string {
                             <th class="px-4 py-3 font-medium">Status</th>
                             <th
                                 v-if="canManageLoans"
-                                class="w-24 px-4 py-3 text-right font-medium"
+                                class="w-64 px-4 py-3 text-right font-medium"
                             >
                                 Actions
                             </th>
@@ -320,21 +335,43 @@ function paginationLabel(label: string): string {
                                 v-if="canManageLoans"
                                 class="px-4 py-4 align-top"
                             >
-                                <div class="flex justify-end">
+                                <div class="flex flex-col items-end gap-1">
                                     <Button
                                         v-if="!loan.returned_at"
                                         type="button"
                                         variant="ghost"
                                         size="icon-sm"
                                         :title="`Check in ${loan.book.title}`"
+                                        :disabled="
+                                            checkInMutation.isPending(loan.id)
+                                        "
                                         @click="checkIn(loan)"
                                     >
-                                        <Check />
-                                        <span class="sr-only"
-                                            >Check in
-                                            {{ loan.book.title }}</span
-                                        >
+                                        <Spinner
+                                            v-if="
+                                                checkInMutation.isPending(
+                                                    loan.id,
+                                                )
+                                            "
+                                        />
+                                        <Check v-else />
+                                        <span class="sr-only">
+                                            {{
+                                                checkInMutation.isPending(
+                                                    loan.id,
+                                                )
+                                                    ? `Checking in ${loan.book.title}`
+                                                    : `Check in ${loan.book.title}`
+                                            }}
+                                        </span>
                                     </Button>
+                                    <p
+                                        v-if="checkInMutation.errorFor(loan.id)"
+                                        class="max-w-56 text-right text-xs text-destructive"
+                                        role="alert"
+                                    >
+                                        {{ checkInMutation.errorFor(loan.id) }}
+                                    </p>
                                 </div>
                             </td>
                         </tr>

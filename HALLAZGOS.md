@@ -18,7 +18,7 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 | P2 | Recuperacion, registro y confirmacion de contrasena requieren limites adicionales | Resuelto | Seguridad de cuenta |
 | P2 | Error de disponibilidad de libro no se muestra en checkout | Resuelto | Experiencia / frontend |
 | P2 | Fecha limite seleccionable contradice la regla del servidor | Resuelto | Experiencia / frontend |
-| P2 | Mutaciones Vue no muestran estados pendientes ni errores contextuales | Pendiente | Experiencia / frontend |
+| P2 | Mutaciones Vue no muestran estados pendientes ni errores contextuales | Resuelto | Experiencia / frontend |
 | P3 | Reutilizacion, accesibilidad y formato pendientes | Pendiente | Mantenibilidad |
 
 ## P0 - Corregir Antes de Entrega
@@ -129,11 +129,13 @@ Este documento consolida los hallazgos confirmados por las revisiones de calidad
 
 ### 11. Mutaciones por fila no muestran estado pendiente ni error contextual
 
+- **Estado:** Resuelto el 2026-07-23.
 - **Area:** [LoansIndex.vue](resources/js/pages/library/LoansIndex.vue), [AccessIndex.vue](resources/js/pages/library/AccessIndex.vue)
 - **Severidad:** Media
 - **Evidencia:** check-in y cambio de rol usan `router.patch` directo; el control de fila no se deshabilita mientras se procesa la peticion.
 - **Impacto:** doble clics o solicitudes simultaneas generan fallos ambiguos o silenciosos.
-- **Correccion recomendada:** extraer un composable pequeno, por ejemplo `usePendingMutation`, con `pendingId`, manejo de error y limpieza en `onFinish`. Deshabilitar solo la fila activa.
+- **Correccion aplicada:** `usePendingMutation` administra solicitudes pendientes y errores por identificador de fila. Check-in y cambio de rol deshabilitan solo su fila activa, muestran un indicador de carga y presentan los errores de validacion en el contexto de la accion.
+- **Validacion aplicada:** las pruebas HTTP confirman que los errores de check-in y cambio de rol se devuelven bajo las claves que muestra cada fila.
 
 ## P3 - Mantenibilidad y Accesibilidad
 
