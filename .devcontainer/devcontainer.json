@@ -14,7 +14,7 @@
 		5173
 	],
 	"features": {
-		"ghcr.io/devcontainers/features/node:1": {},
+		"ghcr.io/devcontainers/features/node:2": {},
 		"ghcr.io/devcontainers-extra/features/composer:1": {},
 		"ghcr.io/devcontainers-extra/features/vue-cli:2": {},
 		"ghcr.io/cirolosapio/devcontainers-features/alpine-php-pcntl:0": {},
